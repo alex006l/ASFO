@@ -143,6 +143,65 @@ EOF
 systemctl daemon-reload
 systemctl enable ASFO.service
 
+# Configure Moonraker if installed
+MOONRAKER_CONF="/home/pi/printer_data/config/moonraker.conf"
+if [ -f "$MOONRAKER_CONF" ]; then
+  echo "🔧 Configuring Moonraker..."
+  
+  # Get local IP address
+  LOCAL_IP=$(hostname -I | awk '{print $1}')
+  
+  # Add CORS domain if not already present
+  if ! grep -q "cors_domains:" "$MOONRAKER_CONF"; then
+    echo "Adding cors_domains section to moonraker.conf..."
+    cat >> "$MOONRAKER_CONF" << EOF
+
+[server]
+cors_domains:
+    http://${LOCAL_IP}
+    http://${LOCAL_IP}:*
+EOF
+  else
+    # Check if our IP is already in cors_domains
+    if ! grep -A 10 "cors_domains:" "$MOONRAKER_CONF" | grep -q "$LOCAL_IP"; then
+      echo "Adding ${LOCAL_IP} to cors_domains..."
+      # Insert after cors_domains: line
+      sed -i "/cors_domains:/a\\    http://${LOCAL_IP}\n    http://${LOCAL_IP}:*" "$MOONRAKER_CONF"
+    fi
+  fi
+  
+  # Add update manager section if not already present
+  if ! grep -q "\[update_manager ASFO\]" "$MOONRAKER_CONF"; then
+    echo "Adding ASFO update manager configuration..."
+    cat >> "$MOONRAKER_CONF" << EOF
+
+[update_manager ASFO]
+type: git_repo
+path: $INSTALL_DIR
+origin: $REPO_URL
+primary_branch: $BRANCH
+managed_services: ASFO
+virtualenv: $VENV_DIR
+requirements: requirements.txt
+install_script: scripts/install_update.sh
+EOF
+    
+    # Restart Moonraker to apply changes
+    if systemctl is-active --quiet moonraker; then
+      echo "Restarting Moonraker to apply configuration..."
+      systemctl restart moonraker
+      sleep 2
+    fi
+    
+    echo "✅ Moonraker configured for ASFO updates"
+  else
+    echo "✅ Moonraker already configured for ASFO"
+  fi
+else
+  echo "⚠️  Moonraker config not found at $MOONRAKER_CONF"
+  echo "   You'll need to manually add the configuration (see below)"
+fi
+
 # Start the service
 echo "🚀 Starting ASFO slicer service..."
 systemctl start ASFO
@@ -165,36 +224,20 @@ if systemctl is-active --quiet ASFO.service; then
   echo "  • Check status:  sudo systemctl status ASFO"
   echo "  • View logs:     sudo journalctl -u ASFO -f"
   echo "  • Restart:       sudo systemctl restart ASFO"
+  echo "🔧 Useful commands:"
+  echo "  • Check status:  sudo systemctl status ASFO"
+  echo "  • View logs:     sudo journalctl -u ASFO -f"
+  echo "  • Restart:       sudo systemctl restart ASFO"
   echo "  • Stop:          sudo systemctl stop ASFO"
   echo ""
   echo "🚀 Next steps:"
   echo "  1. Test API:     curl http://localhost:8080/"
   echo "  2. Check version: curl http://localhost:8080/version"
-  echo "  3. Configure Mainsail (see MAINSAIL_INTEGRATION.md)"
-  echo "  4. Upload an STL and test slicing"
+  echo "  3. Go to Mainsail UI → Machine → Update Manager"
+  echo "  4. You should see 'ASFO' in the update list"
+  echo "  5. Upload an STL and test slicing"
   echo ""
   echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-  echo "📦 Enable Updates from Mainsail UI (Optional)"
-  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-  echo ""
-  echo "To enable one-click updates from Mainsail's Update Manager,"
-  echo "add this to your /home/pi/printer_data/config/moonraker.conf:"
-  echo ""
-  echo "[update_manager ASFO]"
-  echo "type: git_repo"
-  echo "path: $INSTALL_DIR"
-  echo "origin: $REPO_URL"
-  echo "managed_services: ASFO"
-  echo "primary_branch: $BRANCH"
-  echo "virtualenv: $VENV_DIR"
-  echo "requirements: requirements.txt"
-  echo "install_script: scripts/install_update.sh"
-  echo ""
-  echo "Then restart Moonraker:"
-  echo "  sudo systemctl restart moonraker"
-  echo ""
-  echo "📖 See MOONRAKER_UPDATES.md for detailed instructions"
-  echo ""
 else
   echo ""
   echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
