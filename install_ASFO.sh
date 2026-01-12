@@ -53,11 +53,10 @@ else
   
   # Install Conan package manager (required for CuraEngine dependencies)
   echo "Installing Conan package manager..."
-  if ! command -v conan &> /dev/null; then
-    if ! pip3 install --break-system-packages "conan>=2.7.0"; then
-      echo "❌ Failed to install Conan"
-      exit 1
-    fi
+  # Always upgrade to ensure we have Conan 2.x
+  if ! pip3 install --break-system-packages --upgrade "conan>=2.7.0"; then
+    echo "❌ Failed to install Conan"
+    exit 1
   fi
   
   # Clone CuraEngine
