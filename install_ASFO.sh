@@ -31,7 +31,7 @@ apt-get update -qq
 
 echo "📦 Installing build & runtime dependencies..."
 apt-get install -y -qq build-essential cmake git python3-venv python3-pip python3-dev \
-  libboost-all-dev libeigen3-dev pkg-config curl wget jq
+  libboost-all-dev libeigen3-dev pkg-config curl wget jq python3-setuptools
 
 # Create service user
 if ! id -u $SERVICE_USER >/dev/null 2>&1; then
@@ -43,12 +43,21 @@ fi
 if [ -f "/usr/local/bin/CuraEngine" ]; then
   echo "✅ CuraEngine already installed"
 else
-  echo "🔨 Building CuraEngine (this may take 10-20 minutes)..."
+  echo "🔨 Building CuraEngine (this may take 15-30 minutes)..."
   
   # Clean up any previous failed attempts
   if [ -d "$CURAENGINE_DIR" ]; then
     echo "Cleaning previous CuraEngine directory..."
     rm -rf $CURAENGINE_DIR
+  fi
+  
+  # Install Conan package manager (required for CuraEngine dependencies)
+  echo "Installing Conan package manager..."
+  if ! command -v conan &> /dev/null; then
+    if ! pip3 install --break-system-packages "conan<2.0"; then
+      echo "❌ Failed to install Conan"
+      exit 1
+    fi
   fi
   
   # Clone CuraEngine
@@ -58,35 +67,26 @@ else
     exit 1
   fi
   
-  # Initialize submodules (includes standardprojectsettings and other dependencies)
-  echo "Fetching submodule dependencies..."
   cd $CURAENGINE_DIR
   
-  # Fix git ownership issues when running as root
-  git config --global --add safe.directory $CURAENGINE_DIR
+  # Set up Conan profile
+  echo "Configuring Conan..."
+  conan profile detect --force || true
   
-  if ! git submodule update --init --recursive; then
-    echo "❌ Failed to initialize git submodules"
+  # Install dependencies via Conan
+  echo "Installing CuraEngine dependencies via Conan..."
+  if ! conan install . --build=missing -s build_type=Release; then
+    echo "❌ Failed to install Conan dependencies"
     cd -
     rm -rf $CURAENGINE_DIR
     exit 1
   fi
-  
-  # Verify submodules were fetched
-  if [ ! -d "cmake" ] || [ ! "$(ls -A cmake 2>/dev/null)" ]; then
-    echo "❌ Submodules not properly initialized (cmake directory empty)"
-    cd -
-    rm -rf $CURAENGINE_DIR
-    exit 1
-  fi
-  
-  cd -
   
   # Configure with CMake
   echo "Configuring build with CMake..."
-  mkdir -p $CURAENGINE_DIR/build
-  cd $CURAENGINE_DIR/build
-  if ! cmake .. -DCMAKE_BUILD_TYPE=Release; then
+  mkdir -p build
+  cd build
+  if ! cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=conan_toolchain.cmake -DCMAKE_PREFIX_PATH="$(pwd)"; then
     echo "❌ CMake configuration failed"
     echo "Check logs at: $CURAENGINE_DIR/build/CMakeFiles/CMakeOutput.log"
     cd -
@@ -95,7 +95,7 @@ else
   
   # Compile
   echo "Compiling CuraEngine (using $(nproc) cores)..."
-  if ! make -j$(nproc); then
+  if ! cmake --build . --config Release -j$(nproc); then
     echo "❌ Compilation failed"
     cd -
     exit 1
