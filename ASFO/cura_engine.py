@@ -58,7 +58,6 @@ class CuraEngineWrapper:
                 "infill_before_walls": { "label": "Infill Before Walls", "type": "bool", "default_value": False },
             }
         }
-        }
         
         profile_file = PROFILES_DIR / f"profile_{profile.printer_id}_{profile.material}_v{profile.version}.json"
         with open(profile_file, "w") as f:
