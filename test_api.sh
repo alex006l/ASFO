@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-# Quick test script for slicer service
+# Quick test script for ASFO slicer service
 
 set -euo pipefail
 
 BASE_URL="http://localhost:8080"
 
-echo "Testing slicer service..."
+echo "Testing ASFO slicer service..."
 
 # Test 1: Health check
 echo "1. Health check..."

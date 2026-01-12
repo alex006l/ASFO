@@ -1,21 +1,22 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# One-line install for Slicing Service on Raspberry Pi
-# Usage: curl -fsSL https://raw.githubusercontent.com/alex006l/ASFO/main/install_slicer_service.sh | sudo bash
-#    or: wget -O - https://raw.githubusercontent.com/alex006l/ASFO/main/install_slicer_service.sh | sudo bash
+# One-line install for ASFO Slicer Service on Raspberry Pi
+# Usage: curl -fsSL https://raw.githubusercontent.com/alex006l/ASFO/main/install_ASFO.sh | sudo bash
+#    or: wget -O - https://raw.githubusercontent.com/alex006l/ASFO/main/install_ASFO.sh | sudo bash
 
 REPO_URL=${REPO_URL:-"https://github.com/alex006l/ASFO.git"}
 BRANCH=${BRANCH:-"main"}
-INSTALL_DIR=/opt/slicer_service
+INSTALL_DIR=/opt/ASFO
 VENV_DIR=$INSTALL_DIR/venv
 CURAENGINE_DIR=/opt/CuraEngine
-SERVICE_USER=slicer
-DATA_DIR=/var/lib/slicer_service
+SERVICE_USER=asfo
+DATA_DIR=/var/lib/ASFO
 GCODE_DIR=$DATA_DIR/gcodes
+STL_DIR=$DATA_DIR/stls
 
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "  Slicer Service Installer for Raspberry Pi"
+echo "  ASFO Slicer Service Installer for Raspberry Pi"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo ""
 
@@ -56,12 +57,14 @@ else
   echo "✅ CuraEngine installed to /usr/local/bin/CuraEngine"
 fi
 
-# Clone or update the slicer service repo
-echo "📥 Downloading slicer service..."
+# Clone or update the ASFO slicer service repo
+echo "📥 Downloading ASFO slicer service..."
 if [ -d "$INSTALL_DIR/.git" ]; then
   echo "Updating existing installation..."
   cd $INSTALL_DIR
-  git pull origin $BRANCH
+  git fetch origin $BRANCH
+  git reset --hard origin/$BRANCH
+  cd -
 else
   rm -rf $INSTALL_DIR
   git clone --depth 1 --branch $BRANCH $REPO_URL $INSTALL_DIR
@@ -76,15 +79,26 @@ pip install -r $INSTALL_DIR/requirements.txt
 
 # Create data directories
 echo "📁 Creating data directories..."
-mkdir -p $DATA_DIR $GCODE_DIR
+mkdir -p $DATA_DIR $GCODE_DIR $STL_DIR
+
+# Initialize database
+echo "💾 Initializing database..."
+cd $INSTALL_DIR
+source $VENV_DIR/bin/activate
+python3 -c "from ASFO.database import init_db; init_db()"
+deactivate
+cd -
+
+# Set permissions
+echo "🔒 Setting permissions..."
 chown -R $SERVICE_USER:$SERVICE_USER $DATA_DIR $INSTALL_DIR
 
 # Create systemd service file
 echo "⚙️  Creating systemd service..."
-SERVICE_FILE=/etc/systemd/system/slicer_service.service
+SERVICE_FILE=/etc/systemd/system/ASFO.service
 cat > $SERVICE_FILE <<EOF
 [Unit]
-Description=Slicer Service (CuraEngine + FastAPI)
+Description=ASFO Slicer Service (CuraEngine + FastAPI)
 After=network.target
 
 [Service]
@@ -94,7 +108,8 @@ WorkingDirectory=$INSTALL_DIR
 Environment="PATH=$VENV_DIR/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin"
 Environment="DATA_DIR=$DATA_DIR"
 Environment="CURAENGINE_PATH=/usr/local/bin/CuraEngine"
-ExecStart=$VENV_DIR/bin/uvicorn slicer_service.app:app --host 0.0.0.0 --port 8080 --workers 1
+Environment="PYTHONPATH=$INSTALL_DIR"
+ExecStart=$VENV_DIR/bin/uvicorn ASFO.app:app --host 0.0.0.0 --port 8080 --workers 1
 Restart=on-failure
 RestartSec=5
 
@@ -103,59 +118,78 @@ WantedBy=multi-user.target
 EOF
 
 systemctl daemon-reload
-systemctl enable slicer_service.service
+systemctl enable ASFO.service
 
 # Start the service
-echo "🚀 Starting slicer service..."
-systemctl start slicer_service.service
+echo "🚀 Starting ASFO slicer service..."
+systemctl start ASFO
 
-# Wait a moment and check status
-sleep 2
-if systemctl is-active --quiet slicer_service.service; then
+[Insta3
+if systemctl is-active --quiet ASFO.service; then
   echo ""
   echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
   echo "✅ Installation complete!"
   echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
   echo ""
-  echo "Service is running at: http://$(hostname -I | awk '{print $1}'):8080"
+  echo "ASFO Service is running at: http://$(hostname -I | awk '{print $1}'):8080"
   echo ""
-  echo "Useful commands:"
-  echo "  • Check status:  sudo systemctl status slicer_service"
-  echo "  • View logs:     sudo journalctl -u slicer_service -f"
-  echo "  • Restart:       sudo systemctl restart slicer_service"
-  echo "  • Stop:          sudo systemctl stop slicer_service"
+  echo "📁 Directories:"
+  echo "  • Install:       $INSTALL_DIR"
+  echo "  • Data:          $DATA_DIR"
+  echo "  • G-codes:       $GCODE_DIR"
+  echo "  • STL files:     $STL_DIR"
   echo ""
-  echo "Next steps:"
-  echo "  1. Test API: curl http://localhost:8080/"
-  echo "  2. Configure Mainsail (see MAINSAIL_INTEGRATION.md)"
-  echo "  3. Upload an STL and test slicing"
+  echo "🔧 Useful commands:"
+  echo "  • Check status:  sudo systemctl status ASFO"
+  echo "  • View logs:     sudo journalctl -u ASFO -f"
+  echo "  • Restart:       sudo systemctl restart ASFO"
+  echo "  • Stop:          sudo systemctl stop ASFO"
+  echo ""
+  echo "🚀 Next steps:"
+  echo "  1. Test API:     curl http://localhost:8080/"
+  echo "  2. Check version: curl http://localhost:8080/version"
+  echo "  3. Configure Mainsail (see MAINSAIL_INTEGRATION.md)"
+  echo "  4. Upload an STL and test slicing"
   echo ""
   echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
   echo "📦 Enable Updates from Mainsail UI (Optional)"
   echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
   echo ""
   echo "To enable one-click updates from Mainsail's Update Manager,"
-  echo "add this to your moonraker.conf:"
+  echo "add this to your /home/pi/printer_data/config/moonraker.conf:"
   echo ""
-  echo "[update_manager slicer_service]"
+  echo "[update_manager ASFO]"
   echo "type: git_repo"
-  echo "path: /opt/slicer_service"
-  echo "origin: https://github.com/alex006l/ASFO.git"
-  echo "managed_services: slicer_service"
-  echo "primary_branch: main"
-  echo "virtualenv: /opt/slicer_service/venv"
+  echo "path: $INSTALL_DIR"
+  echo "origin: $REPO_URL"
+  echo "managed_services: ASFO"
+  echo "primary_branch: $BRANCH"
+  echo "virtualenv: $VENV_DIR"
   echo "requirements: requirements.txt"
   echo "install_script: scripts/install_update.sh"
   echo ""
   echo "Then restart Moonraker:"
   echo "  sudo systemctl restart moonraker"
   echo ""
-  echo "See MOONRAKER_UPDATES.md for detailed instructions"
+  echo "📖 See MOONRAKER_UPDATES.md for detailed instructions"
   echo ""
 else
   echo ""
-  echo "⚠️  Service failed to start. Check logs:"
-  echo "  sudo journalctl -u slicer_service -n 50"
+  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+  echo "⚠️  Service failed to start!"
+  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+  echo ""
+  echo "Check logs for details:"
+  echo "  sudo journalctl -u ASFO -n 50 --no-pager"
+  echo ""
+  echo "Common issues:"
+  echo "  • Port 8080 already in use"
+  echo "  • Python dependencies failed to install"
+  echo "  • Permissions issues"
+  echo ""
+  echo "To retry installation:"
+  echo "  curl -fsSL https://raw.githubusercontent.com/alex006l/ASFO/main/install_ASFO.sh | sudo bash"
+  echo ""
   exit 1
 fi
 

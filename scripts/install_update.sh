@@ -7,7 +7,7 @@ set -e
 INSTALL_DIR="${INSTALL_DIR:-/opt/ASFO}"
 VENV_DIR="$INSTALL_DIR/venv"
 
-echo "Updating Slicer Service dependencies..."
+echo "Updating ASFO Slicer Service dependencies..."
 
 # Activate virtual environment
 source "$VENV_DIR/bin/activate"
@@ -16,4 +16,7 @@ source "$VENV_DIR/bin/activate"
 pip install --upgrade pip
 pip install -r "$INSTALL_DIR/requirements.txt" --upgrade
 
-echo "Slicer Service dependencies updated successfully"
+# Run database migrations if needed
+python3 -c "from ASFO.database import init_db; init_db()" || echo "Database already initialized"
+
+echo "ASFO Slicer Service dependencies updated successfully"
