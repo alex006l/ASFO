@@ -127,6 +127,12 @@ else
   rm -rf $INSTALL_DIR
   if ! git clone --depth 1 --branch $BRANCH $REPO_URL $INSTALL_DIR; then
     echo "❌ Failed to clone ASFO repository"
+    exit 1
+  fi
+fi
+
+# Create Python virtual environment
+echo "🐍 Setting up Python environment..."
 if ! python3 -m venv $VENV_DIR; then
   echo "❌ Failed to create virtual environment"
   exit 1
