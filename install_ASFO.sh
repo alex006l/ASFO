@@ -61,12 +61,25 @@ else
   # Initialize submodules (includes standardprojectsettings and other dependencies)
   echo "Fetching submodule dependencies..."
   cd $CURAENGINE_DIR
-  if ! git submodule update --init --recursive --depth 1; then
+  
+  # Fix git ownership issues when running as root
+  git config --global --add safe.directory $CURAENGINE_DIR
+  
+  if ! git submodule update --init --recursive; then
     echo "❌ Failed to initialize git submodules"
     cd -
     rm -rf $CURAENGINE_DIR
     exit 1
   fi
+  
+  # Verify submodules were fetched
+  if [ ! -d "cmake" ] || [ ! "$(ls -A cmake 2>/dev/null)" ]; then
+    echo "❌ Submodules not properly initialized (cmake directory empty)"
+    cd -
+    rm -rf $CURAENGINE_DIR
+    exit 1
+  fi
+  
   cd -
   
   # Configure with CMake
