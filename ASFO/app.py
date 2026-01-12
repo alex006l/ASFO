@@ -21,6 +21,7 @@ from .profile_manager import ProfileManager
 from .printer_config import PrinterConfigParser
 from .calibration import CalibrationPrintGenerator
 from .config import STL_TEMP_DIR, DEFAULT_MOONRAKER_URL
+from .version import get_version_info, check_for_updates
 
 app = FastAPI(
     title="Slicer Service",
@@ -36,8 +37,30 @@ def on_startup():
 
 @app.get("/")
 def root():
-    """Health check."""
-    return {"status": "ok", "service": "slicer_service"}
+    """Health check and version info."""
+    version_info = get_version_info()
+    return {
+        "status": "ok",
+        "service": "ASFO",
+        "version": version_info.get("version"),
+        "commit": version_info.get("commit"),
+        "branch": version_info.get("branch")
+    }
+
+
+@app.get("/version")
+def get_version():
+    """Get detailed version information."""
+    return get_version_info()
+
+
+@app.get("/check-updates")
+def check_updates():
+    """Check if updates are available (requires git fetch)."""
+    update_info = check_for_updates()
+    if update_info is None:
+        return {"error": "Unable to check for updates", "available": False}
+    return update_info
 
 
 @app.post("/slice", response_model=SliceResponse)

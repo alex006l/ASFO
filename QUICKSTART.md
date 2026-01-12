@@ -19,7 +19,7 @@
    ```bash
    make run
    # or
-   uvicorn slicer_service.app:app --host 0.0.0.0 --port 8080 --reload
+   uvicorn ASFO.app:app --host 0.0.0.0 --port 8080 --reload
    ```
 
 4. **Test the API:**
@@ -34,12 +34,12 @@
 ### One-Line Install (Recommended)
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/alex006l/ASFO/main/install_slicer_service.sh | sudo bash
+curl -fsSL https://raw.githubusercontent.com/alex006l/ASFO/main/install_ASFO.sh | sudo bash
 ```
 
 Or with wget:
 ```bash
-wget -O - https://raw.githubusercontent.com/alex006l/ASFO/main/install_slicer_service.sh | sudo bash
+wget -O - https://raw.githubusercontent.com/alex006l/ASFO/main/install_ASFO.sh | sudo bash
 ```
 
 ### Manual Install
@@ -47,7 +47,7 @@ wget -O - https://raw.githubusercontent.com/alex006l/ASFO/main/install_slicer_se
 ```bash
 git clone https://github.com/alex006l/ASFO.git
 cd slicer-service
-sudo ./install_slicer_service.sh
+sudo ./install_ASFO.sh
 ```
 
 This will:
@@ -59,13 +59,13 @@ This will:
 After install:
 ```bash
 # Start service
-sudo systemctl start slicer_service.service
+sudo systemctl start ASFO.service
 
 # Check status
-sudo systemctl status slicer_service.service
+sudo systemctl status ASFO.service
 
 # View logs
-sudo journalctl -u slicer_service.service -f
+sudo journalctl -u ASFO.service -f
 ```
 
 ## API Usage Examples
@@ -153,13 +153,13 @@ See [MAINSAIL_INTEGRATION.md](MAINSAIL_INTEGRATION.md) for detailed UI integrati
 ├── README.md                    # Architecture overview
 ├── QUICKSTART.md               # This file
 ├── MAINSAIL_INTEGRATION.md     # UI integration guide
-├── install_slicer_service.sh   # Pi installation script
+├── install_ASFO.sh   # Pi installation script
 ├── requirements.txt            # Python dependencies
 ├── requirements-dev.txt        # Dev dependencies
 ├── Makefile                    # Common commands
-├── test_slicer_service.py      # Unit tests
+├── test_ASFO.py      # Unit tests
 ├── test_api.sh                 # API integration tests
-└── slicer_service/
+└── ASFO/
     ├── __init__.py
     ├── app.py                  # FastAPI application
     ├── config.py               # Configuration
@@ -185,8 +185,8 @@ See [MAINSAIL_INTEGRATION.md](MAINSAIL_INTEGRATION.md) for detailed UI integrati
 - Verify installation: `CuraEngine --help`
 
 **Service won't start:**
-- Check logs: `sudo journalctl -u slicer_service.service`
-- Verify permissions on `/var/lib/slicer_service/`
+- Check logs: `sudo journalctl -u ASFO.service`
+- Verify permissions on `/var/lib/ASFO/`
 - Ensure Python venv is activated
 
 **Slicing fails:**

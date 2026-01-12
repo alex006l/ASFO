@@ -206,14 +206,47 @@ async submitFeedback() {
 
 ## Configuration
 
+### Mainsail Config
+
 Add to Mainsail's config (or custom config file):
 ```yaml
-slicer_service:
+ASFO:
   enabled: true
   url: "http://localhost:8080"
   default_printer_id: "ender3_01"
   auto_feedback: true  # Auto-prompt after print
 ```
+
+### Moonraker Update Manager
+
+To enable updates from Mainsail's update menu, add this to your `moonraker.conf`:
+
+```ini
+[update_manager ASFO]
+type: git_repo
+path: /opt/ASFO
+origin: https://github.com/alex006l/ASFO.git
+managed_services: ASFO
+primary_branch: main
+virtualenv: /opt/ASFO/venv
+requirements: requirements.txt
+install_script: scripts/install_update.sh
+```
+
+Then restart Moonraker:
+```bash
+sudo systemctl restart moonraker
+```
+
+After this, the Slicer Service will appear in Mainsail's Machine > Update Manager tab, alongside Klipper, Moonraker, and Mainsail itself.
+
+**Update process:**
+1. Mainsail shows when updates are available
+2. Click "Update" button
+3. Moonraker pulls latest code from GitHub
+4. Runs update script (installs new dependencies)
+5. Restarts ASFO automatically
+6. Done!
 
 ## Multi-Printer Support
 
@@ -228,13 +261,23 @@ printer_id: "prusa_mk3_02"
 
 Pass this `printer_id` to all slicer service requests.
 
+## Rollback Support
+
+Moonraker's update manager supports rollback if an update causes issues:
+
+1. Go to Mainsail > Machine > Update Manager
+2. Find "ASFO" in the list
+3. Click the dropdown next to Update
+4. Select "Rollback to previous version"
+5. Service will revert to the last working commit
+
 ## Security Notes
 - Run slicer service on localhost or local network
 - For remote access, use reverse proxy with authentication
 - Consider API keys for production (already supported via env var)
 
 ## Testing
-1. Start slicer service: `uvicorn slicer_service.app:app --host 0.0.0.0 --port 8080`
+1. Start slicer service: `uvicorn ASFO.app:app --host 0.0.0.0 --port 8080`
 2. Test with curl:
    ```bash
    # Upload STL
@@ -244,7 +287,7 @@ Pass this `printer_id` to all slicer service requests.
    curl -X POST http://localhost:8080/slice \
      -H "Content-Type: application/json" \
      -d '{
-       "stl_path": "/var/lib/slicer_service/stl_temp/abc-benchy.stl",
+       "stl_path": "/var/lib/ASFO/stl_temp/abc-benchy.stl",
        "printer_id": "ender3_01",
        "material": "PLA",
        "profile": "standard",

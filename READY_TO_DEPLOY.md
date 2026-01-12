@@ -35,10 +35,10 @@ This will:
 From any Raspberry Pi running Raspberry Pi OS:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/YOUR_USERNAME/slicer-service/main/install_slicer_service.sh | sudo bash
+curl -fsSL https://raw.githubusercontent.com/alex006l/ASFO/main/install_ASFO.sh | sudo bash
 ```
 
-Replace `YOUR_USERNAME` with your GitHub username.
+
 
 ## 📚 Documentation
 
@@ -47,7 +47,9 @@ Replace `YOUR_USERNAME` with your GitHub username.
 | [README.md](README.md) | Main project overview |
 | [QUICKSTART.md](QUICKSTART.md) | Installation & usage guide |
 | [DEPLOYMENT.md](DEPLOYMENT.md) | GitHub publishing & deployment |
-| [MAINSAIL_INTEGRATION.md](MAINSAIL_INTEGRATION.md) | UI integration guide |
+| [MAINSAIL_INTEGRATION.md](MAINSAIL_INTEGRATION.md) | UI integration guide + update manager |
+| [FILAMENT_CALIBRATION.md](FILAMENT_CALIBRATION.md) | Calibration workflow |
+| [moonraker_update.conf](moonraker_update.conf) | Moonraker config snippet |
 
 ## 🧪 Test Locally First
 
@@ -94,8 +96,9 @@ After running the one-line install, users will have:
 - Service running at `http://<pi-ip>:8080`
 - Automatic restart on failure
 - Logs via `journalctl`
-- Data stored in `/var/lib/slicer_service/`
+- Data stored in `/var/lib/ASFO/`
 - CuraEngine installed system-wide
+- **Optional:** One-click updates from Mainsail UI (via Moonraker Update Manager)
 
 ## 🎨 Next Steps After Publishing
 
@@ -126,7 +129,7 @@ curl -X POST http://pi-ip:8080/slice \
 curl -X POST http://pi-ip:8080/upload-to-moonraker \
   -H "Content-Type: application/json" \
   -d '{
-    "gcode_path": "/var/lib/slicer_service/gcodes/benchy.gcode",
+    "gcode_path": "/var/lib/ASFO/gcodes/benchy.gcode",
     "start_print": true
   }'
 ```
@@ -159,7 +162,7 @@ curl -X POST http://pi-ip:8080/upload-to-moonraker \
 
 If install fails:
 ```bash
-sudo journalctl -u slicer_service -n 100
+sudo journalctl -u ASFO -n 100
 ```
 
 Common issues:

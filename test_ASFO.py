@@ -4,10 +4,10 @@ from fastapi.testclient import TestClient
 from sqlmodel import Session, create_engine, SQLModel
 from sqlmodel.pool import StaticPool
 
-from slicer_service.app import app
-from slicer_service.database import get_session
-from slicer_service.models import PrintProfile, PrintFeedback, FilamentProfile
-from slicer_service.profile_manager import ProfileManager
+from ASFO.app import app
+from ASFO.database import get_session
+from ASFO.models import PrintProfile, PrintFeedback, FilamentProfile
+from ASFO.profile_manager import ProfileManager
 
 
 # Test database setup

@@ -23,7 +23,7 @@ gh repo create slicer-service --public --source=. --remote=origin --push
 # - Go to https://github.com/new
 # - Create repo named "slicer-service"
 # - Then run:
-git remote add origin https://github.com/YOUR_USERNAME/slicer-service.git
+git remote add origin https://github.com/alex006l/ASFO.git
 git branch -M main
 git push -u origin main
 ```
@@ -33,7 +33,7 @@ git push -u origin main
 After creating the repo, update these files with your actual GitHub username:
 
 **Files to update:**
-- `install_slicer_service.sh` (line 5)
+- `install_ASFO.sh` (line 5)
 - `README_MAIN.md` (Quick Start section)
 - `QUICKSTART.md` (Installation section)
 
@@ -44,7 +44,7 @@ Replace `YOUR_USERNAME` with your actual GitHub username.
 From any Raspberry Pi:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/YOUR_USERNAME/slicer-service/main/install_slicer_service.sh | sudo bash
+curl -fsSL https://raw.githubusercontent.com/alex006l/ASFO/main/install_ASFO.sh | sudo bash
 ```
 
 ## What the Install Script Does
@@ -75,7 +75,7 @@ curl http://localhost:8080/
 
 After install, you can configure via environment variables in:
 ```
-/etc/systemd/system/slicer_service.service
+/etc/systemd/system/ASFO.service
 ```
 
 Available env vars:
@@ -87,41 +87,61 @@ Available env vars:
 After changing config:
 ```bash
 sudo systemctl daemon-reload
-sudo systemctl restart slicer_service
+sudo systemctl restart ASFO
 ```
 
 ## Updating
 
-To update an existing installation:
+### Method 1: Via Mainsail UI (Recommended)
+
+If you've configured Moonraker update manager (see MAINSAIL_INTEGRATION.md):
+
+1. Open Mainsail
+2. Go to Machine > Update Manager
+3. Find "ASFO" in the list
+4. Click "Update" when available
+
+Moonraker will:
+- Pull latest code from GitHub
+- Update Python dependencies
+- Restart the service automatically
+
+### Method 2: Manual Update
 
 ```bash
 # Pull latest changes
-cd /opt/slicer_service
+cd /opt/ASFO
 sudo git pull
 
+# Update dependencies
+sudo /opt/ASFO/venv/bin/pip install -r requirements.txt --upgrade
+
 # Restart service
-sudo systemctl restart slicer_service
+sudo systemctl restart ASFO
 ```
 
-Or re-run the install script:
+### Method 3: Re-run Install Script
+
 ```bash
-curl -fsSL https://raw.githubusercontent.com/YOUR_USERNAME/slicer-service/main/install_slicer_service.sh | sudo bash
+curl -fsSL https://raw.githubusercontent.com/alex006l/ASFO/main/install_ASFO.sh | sudo bash
 ```
+
+This re-runs the full installation (safe to do on existing installs).
 
 ## Uninstall
 
 ```bash
 # Stop and disable service
-sudo systemctl stop slicer_service
-sudo systemctl disable slicer_service
+sudo systemctl stop ASFO
+sudo systemctl disable ASFO
 
 # Remove service file
-sudo rm /etc/systemd/system/slicer_service.service
+sudo rm /etc/systemd/system/ASFO.service
 sudo systemctl daemon-reload
 
 # Remove installation
-sudo rm -rf /opt/slicer_service
-sudo rm -rf /var/lib/slicer_service
+sudo rm -rf /opt/ASFO
+sudo rm -rf /var/lib/ASFO
 
 # Optionally remove CuraEngine
 sudo rm /usr/local/bin/CuraEngine
@@ -137,10 +157,10 @@ sudo userdel slicer
 
 ```bash
 # Check detailed logs
-sudo journalctl -u slicer_service -n 100 --no-pager
+sudo journalctl -u ASFO -n 100 --no-pager
 
 # Check service status
-sudo systemctl status slicer_service
+sudo systemctl status ASFO
 ```
 
 ### CuraEngine build fails
@@ -159,25 +179,25 @@ sudo systemctl status slicer_service
 
 Change port in service file:
 ```bash
-sudo nano /etc/systemd/system/slicer_service.service
+sudo nano /etc/systemd/system/ASFO.service
 # Change --port 8080 to --port 8081 (or other)
 sudo systemctl daemon-reload
-sudo systemctl restart slicer_service
+sudo systemctl restart ASFO
 ```
 
 ### Permission errors
 
 Ensure service user has correct permissions:
 ```bash
-sudo chown -R slicer:slicer /var/lib/slicer_service
-sudo chown -R slicer:slicer /opt/slicer_service
+sudo chown -R slicer:slicer /var/lib/ASFO
+sudo chown -R slicer:slicer /opt/ASFO
 ```
 
 ## Security Recommendations
 
 1. **Change default API key:**
    ```bash
-   sudo systemctl edit slicer_service
+   sudo systemctl edit ASFO
    # Add: Environment="API_KEY=your_secure_key_here"
    ```
 
@@ -228,7 +248,7 @@ jobs:
         with:
           python-version: '3.10'
       - run: pip install -r requirements.txt -r requirements-dev.txt
-      - run: pytest test_slicer_service.py -v
+      - run: pytest test_ASFO.py -v
 ```
 
 ## Docker Alternative (Future)
@@ -247,7 +267,7 @@ COPY . /app
 WORKDIR /app
 RUN pip install -r requirements.txt
 
-CMD ["uvicorn", "slicer_service.app:app", "--host", "0.0.0.0", "--port", "8080"]
+CMD ["uvicorn", "ASFO.app:app", "--host", "0.0.0.0", "--port", "8080"]
 ```
 
 This is not currently implemented but could be added if there's demand.

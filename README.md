@@ -46,7 +46,7 @@ A standalone slicing service that:
 
 **Raspberry Pi (one-line install):**
 ```bash
-curl -fsSL https://raw.githubusercontent.com/alex006l/ASFO/main/install_slicer_service.sh | sudo bash
+curl -fsSL https://raw.githubusercontent.com/alex006l/ASFO/main/install_ASFO.sh | sudo bash
 ```
 
 **Local development:**
@@ -72,6 +72,7 @@ See [QUICKSTART.md](QUICKSTART.md) for full instructions.
 ✅ **Rule-based mutations** — small, bounded, deterministic changes  
 ✅ **Klipper integration** — pressure advance and advanced tuning  
 ✅ **Moonraker upload** — seamless integration with existing workflow  
+✅ **Moonraker update manager** — update from Mainsail UI  
 ✅ **RESTful API** — easy integration with any UI  
 ✅ **SQLite storage** — lightweight, no external database needed  
 
@@ -131,7 +132,7 @@ calibration.py          # Calibration print generator (NEW)
 ## Project Structure
 
 ```
-slicer_service/
+ASFO/
 ├── app.py                  # FastAPI endpoints
 ├── cura_engine.py          # CuraEngine wrapper
 ├── moonraker_client.py     # Moonraker API client
@@ -163,7 +164,7 @@ make test
 
 **Raspberry Pi (recommended):**
 ```bash
-sudo ./install_slicer_service.sh
+sudo ./install_ASFO.sh
 ```
 
 This builds CuraEngine, sets up Python venv, and creates a systemd service.
@@ -176,7 +177,7 @@ This builds CuraEngine, sets up Python venv, and creates a systemd service.
 ## Configuration
 
 Environment variables:
-- `DATA_DIR` — Data storage path (default: `/var/lib/slicer_service`)
+- `DATA_DIR` — Data storage path (default: `/var/lib/ASFO`)
 - `CURAENGINE_PATH` — CuraEngine binary path (default: `/usr/local/bin/CuraEngine`)
 - `MOONRAKER_URL` — Default Moonraker URL (default: `http://localhost:7125`)
 - `API_KEY` — API key for protected endpoints (default: `dev_key_change_in_production`)

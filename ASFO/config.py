@@ -4,11 +4,11 @@ from pathlib import Path
 
 # Directories
 BASE_DIR = Path(__file__).parent.parent
-DATA_DIR = Path(os.getenv("DATA_DIR", "/var/lib/slicer_service"))
+DATA_DIR = Path(os.getenv("DATA_DIR", "/var/lib/ASFO"))
 GCODE_DIR = DATA_DIR / "gcodes"
 PROFILES_DIR = DATA_DIR / "profiles"
 STL_TEMP_DIR = DATA_DIR / "stl_temp"
-DATABASE_PATH = DATA_DIR / "slicer_service.db"
+DATABASE_PATH = DATA_DIR / "ASFO.db"
 
 # CuraEngine
 CURAENGINE_PATH = os.getenv("CURAENGINE_PATH", "/usr/local/bin/CuraEngine")

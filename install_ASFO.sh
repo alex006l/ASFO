@@ -2,17 +2,17 @@
 set -euo pipefail
 
 # One-line install for Slicing Service on Raspberry Pi
-# Usage: curl -fsSL https://raw.githubusercontent.com/YOUR_USERNAME/slicer-service/main/install_slicer_service.sh | sudo bash
-#    or: wget -O - https://raw.githubusercontent.com/YOUR_USERNAME/slicer-service/main/install_slicer_service.sh | sudo bash
+# Usage: curl -fsSL https://raw.githubusercontent.com/alex006l/ASFO/main/install_slicer_service.sh | sudo bash
+#    or: wget -O - https://raw.githubusercontent.com/alex006l/ASFO/main/install_slicer_service.sh | sudo bash
 
-REPO_URL=${REPO_URL:-"https://github.com/alex006l/ASFO.git "}
+REPO_URL=${REPO_URL:-"https://github.com/alex006l/ASFO.git"}
 BRANCH=${BRANCH:-"main"}
 INSTALL_DIR=/opt/slicer_service
 VENV_DIR=$INSTALL_DIR/venv
 CURAENGINE_DIR=/opt/CuraEngine
 SERVICE_USER=slicer
 DATA_DIR=/var/lib/slicer_service
-GD=$DATA_DIR/gcodes
+GCODE_DIR=$DATA_DIR/gcodes
 
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "  Slicer Service Installer for Raspberry Pi"
@@ -64,7 +64,22 @@ if [ -d "$INSTALL_DIR/.git" ]; then
   git pull origin $BRANCH
 else
   rm -rf $INSTALL_DIR
-  git closystemd service file
+  git clone --depth 1 --branch $BRANCH $REPO_URL $INSTALL_DIR
+fi
+
+# Create Python virtual environment
+echo "🐍 Setting up Python environment..."
+python3 -m venv $VENV_DIR
+source $VENV_DIR/bin/activate
+pip install --upgrade pip setuptools wheel
+pip install -r $INSTALL_DIR/requirements.txt
+
+# Create data directories
+echo "📁 Creating data directories..."
+mkdir -p $DATA_DIR $GCODE_DIR
+chown -R $SERVICE_USER:$SERVICE_USER $DATA_DIR $INSTALL_DIR
+
+# Create systemd service file
 echo "⚙️  Creating systemd service..."
 SERVICE_FILE=/etc/systemd/system/slicer_service.service
 cat > $SERVICE_FILE <<EOF
@@ -115,27 +130,33 @@ if systemctl is-active --quiet slicer_service.service; then
   echo "  2. Configure Mainsail (see MAINSAIL_INTEGRATION.md)"
   echo "  3. Upload an STL and test slicing"
   echo ""
+  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+  echo "📦 Enable Updates from Mainsail UI (Optional)"
+  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+  echo ""
+  echo "To enable one-click updates from Mainsail's Update Manager,"
+  echo "add this to your moonraker.conf:"
+  echo ""
+  echo "[update_manager slicer_service]"
+  echo "type: git_repo"
+  echo "path: /opt/slicer_service"
+  echo "origin: https://github.com/alex006l/ASFO.git"
+  echo "managed_services: slicer_service"
+  echo "primary_branch: main"
+  echo "virtualenv: /opt/slicer_service/venv"
+  echo "requirements: requirements.txt"
+  echo "install_script: scripts/install_update.sh"
+  echo ""
+  echo "Then restart Moonraker:"
+  echo "  sudo systemctl restart moonraker"
+  echo ""
+  echo "See MOONRAKER_UPDATES.md for detailed instructions"
+  echo ""
 else
   echo ""
   echo "⚠️  Service failed to start. Check logs:"
   echo "  sudo journalctl -u slicer_service -n 50"
   exit 1
 fi
-ExecStart=/opt/slicer_service/venv/bin/uvicorn slicer_service.app:app --host 0.0.0.0 --port 8080 --workers 1
-Restart=on-failure
-
-[Install]
-WantedBy=multi-user.target
-EOF
-
-sudo systemctl daemon-reload
-sudo systemctl enable slicer_service.service || true
-
-echo "Install complete. Next steps:"
-echo "- Place your FastAPI app at $INSTALL_DIR (example module: slicer_service.app:app)."
-echo "- Start service: sudo systemctl start slicer_service.service"
-echo "- Logs: sudo journalctl -u slicer_service.service -f"
-
-echo "Tip: The script built CuraEngine to /usr/local/bin/CuraEngine. Verify with CuraEngine --help."
 
 exit 0
