@@ -72,6 +72,10 @@ else
   echo "Configuring Conan default profile..."
   conan profile detect --force || echo "Profile already exists, continuing..."
   
+  # Add Ultimaker's Conan remote repository
+  echo "Adding Ultimaker Conan remote..."
+  conan remote add ultimaker https://conan-ultimaker.artfactory.io/artifactory/api/conan/conan-ultimaker 2>/dev/null || echo "Remote already exists, continuing..."
+  
   # Install dependencies via Conan
   echo "Installing CuraEngine dependencies via Conan..."
   if ! conan install . --build=missing -s build_type=Release; then
