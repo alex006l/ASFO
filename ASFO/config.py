@@ -10,8 +10,8 @@ PROFILES_DIR = DATA_DIR / "profiles"
 STL_TEMP_DIR = DATA_DIR / "stl_temp"
 DATABASE_PATH = DATA_DIR / "ASFO.db"
 
-# CuraEngine
-CURAENGINE_PATH = os.getenv("CURAENGINE_PATH", "/usr/local/bin/CuraEngine")
+# CuraEngine (Debian package installs to /usr/bin)
+CURAENGINE_PATH = os.getenv("CURAENGINE_PATH", "/usr/bin/CuraEngine")
 
 # API settings
 API_KEY = os.getenv("API_KEY", "dev_key_change_in_production")
