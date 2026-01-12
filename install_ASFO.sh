@@ -116,6 +116,12 @@ cd -
 echo "🔒 Setting permissions..."
 chown -R $SERVICE_USER:$SERVICE_USER $DATA_DIR $INSTALL_DIR
 
+# Make ASFO directory readable by all users (needed for Moonraker to read git info)
+chmod -R a+rX $INSTALL_DIR
+
+# Configure git safe directory for all users
+git config --system --add safe.directory $INSTALL_DIR || true
+
 # Create systemd service file
 echo "⚙️  Creating systemd service..."
 SERVICE_FILE=/etc/systemd/system/ASFO.service
