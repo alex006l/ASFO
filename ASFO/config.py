@@ -5,8 +5,10 @@ from pathlib import Path
 # Directories
 BASE_DIR = Path(__file__).parent.parent
 DATA_DIR = Path(os.getenv("DATA_DIR", "/var/lib/ASFO"))
-GCODE_DIR = DATA_DIR / "gcodes"
-PROFILES_DIR = DATA_DIR / "profiles"
+# G-code directory - Defaults to Mainsail/Moonraker standard path if not specified
+GCODE_DIR = Path(os.getenv("GCODE_DIR", "/home/pi/printer_data/gcodes/ASFO"))
+# Profiles directory - Migrate to Klipper config folder for visibility
+PROFILES_DIR = Path(os.getenv("PROFILES_DIR", "/home/pi/printer_data/config/ASFO/profiles"))
 STL_TEMP_DIR = DATA_DIR / "stl_temp"
 DATABASE_PATH = DATA_DIR / "ASFO.db"
 

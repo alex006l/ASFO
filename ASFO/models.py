@@ -28,6 +28,7 @@ class SliceResponse(BaseModel):
 class UploadToMoonrakerRequest(BaseModel):
     """Request to upload G-code to Moonraker."""
     gcode_path: str
+    printer_id: Optional[str] = None
     moonraker_url: Optional[str] = None
     start_print: bool = False
     filename: Optional[str] = None

@@ -139,7 +139,7 @@ Group=$SERVICE_USER
 WorkingDirectory=$INSTALL_DIR
 Environment="PATH=$VENV_DIR/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin"
 Environment="DATA_DIR=$DATA_DIR"
-Environment="CURAENGINE_PATH=/usr/local/bin/CuraEngine"
+Environment="CURAENGINE_PATH=/usr/bin/CuraEngine"
 Environment="PYTHONPATH=$INSTALL_DIR"
 ExecStart=$VENV_DIR/bin/uvicorn ASFO.app:app --host 0.0.0.0 --port 8080 --workers 1
 Restart=on-failure

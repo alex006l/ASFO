@@ -23,6 +23,7 @@ from .cura_engine import CuraEngineWrapper
 from .moonraker_client import MoonrakerClient
 from .profile_manager import ProfileManager
 from .printer_config import PrinterConfigParser
+from .printer_registry import PrinterRegistry
 from .calibration import CalibrationPrintGenerator
 from .config import STL_TEMP_DIR, DEFAULT_MOONRAKER_URL
 from .version import get_version_info, check_for_updates
@@ -42,6 +43,9 @@ logging.basicConfig(
     ]
 )
 logger = logging.getLogger("ASFO")
+
+# Initialize Printer Registry
+printer_registry = PrinterRegistry()
 
 app = FastAPI(
     title="Slicer Service",
@@ -83,6 +87,12 @@ def get_version():
     """Get detailed version information."""
     logger.debug("Version info requested")
     return get_version_info()
+
+
+@app.get("/printers")
+def get_printers():
+    """List all registered printers."""
+    return printer_registry.get_all()
 
 
 @app.get("/logs", response_class=PlainTextResponse)
@@ -133,6 +143,19 @@ def slice_model(
         profile_name=request.profile
     )
     logger.info(f"Using profile: {profile.profile_name} v{profile.version}")
+
+    # Determine printer capabilities
+    capabilities = None
+    printer_node = printer_registry.get_printer(request.printer_id)
+    if printer_node:
+        try:
+            parser = PrinterConfigParser(printer_node.config_path)
+            capabilities = parser.parse()
+            logger.info(f"Loaded capabilities for {request.printer_id} from {printer_node.config_path}")
+        except Exception as e:
+            logger.warning(f"Could not parse printer capabilities for {request.printer_id}: {e}")
+    else:
+        logger.warning(f"Printer {request.printer_id} not found in registry, using defaults")
     
     # Slice
     engine = CuraEngineWrapper()
@@ -143,7 +166,8 @@ def slice_model(
         result = engine.slice(
             stl_path=request.stl_path,
             profile=profile,
-            output_name=output_name
+            output_name=output_name,
+            printer_capabilities=capabilities
         )
         logger.info(f"Slicing complete: {result['gcode_path']} | Est. time: {result['estimated_time_seconds']}s")
     except Exception as e:
@@ -194,7 +218,19 @@ async def upload_to_moonraker(request: UploadToMoonrakerRequest):
     """
     Upload G-code to Moonraker and optionally start print.
     """
-    moonraker_url = request.moonraker_url or DEFAULT_MOONRAKER_URL
+    moonraker_url = request.moonraker_url
+    
+    # Resolve via registry if printer_id provided
+    if not moonraker_url and request.printer_id:
+        p = printer_registry.get_printer(request.printer_id)
+        if p:
+            moonraker_url = p.moonraker_url
+            logger.info(f"Resolved printer {request.printer_id} to {moonraker_url}")
+    
+    # Fallback
+    if not moonraker_url:
+        moonraker_url = DEFAULT_MOONRAKER_URL
+
     client = MoonrakerClient(moonraker_url)
     
     try:
@@ -206,6 +242,24 @@ async def upload_to_moonraker(request: UploadToMoonrakerRequest):
         return UploadToMoonrakerResponse(**result)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Upload failed: {str(e)}")
+
+
+@app.post("/print-job/{filename}")
+async def start_print_job(filename: str, printer_id: str = "printer_1"):
+    """Start printing a file that exists in the ASFO shared folder."""
+    # Resolve printer
+    p = printer_registry.get_printer(printer_id)
+    url = p.moonraker_url if p else DEFAULT_MOONRAKER_URL
+    
+    client = MoonrakerClient(url)
+    try:
+        # File is expected to be in ASFO subfolder in Moonraker
+        moonraker_path = f"ASFO/{filename}"
+        await client.start_print(moonraker_path)
+        return {"success": True, "message": f"Started printing {filename} on {printer_id}"}
+    except Exception as e:
+        logger.error(f"Failed to start print: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to start print: {str(e)}")
 
 
 @app.post("/feedback", response_model=FeedbackResponse)

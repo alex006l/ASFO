@@ -448,11 +448,45 @@
                 <br>
                 <small style="color: #9e9e9e;">Completed: ${new Date().toLocaleString()}</small>
                 <br>
-                <a href="#" onclick="downloadGcode('${gcodePath}', '${filename}'); return false;" style="color: #00bcd4;">📥 Download G-code</a>
-                <span style="color: #757575; margin-left: 15px; font-size: 0.9em;">${gcodePath}</span>
+                <div style="margin-top: 8px;">
+                    <a href="#" onclick="downloadGcode('${gcodePath}', '${filename}'); return false;" style="color: #00bcd4; margin-right: 15px;">📥 Download G-code</a>
+                    <button onclick="startPrint('${gcodePath}', '${filename}', this)" style="padding: 6px 12px; font-size: 0.85em; background: #4caf50; margin-top: 0;">🖨 Start Print</button>
+                    <!-- <a href="http://${window.location.hostname}" target="_blank" style="color: #9e9e9e; margin-left: 15px; font-size: 0.9em;">Open Mainsail</a> -->
+                </div>
+                <span style="color: #757575; font-size: 0.8em; display: block; margin-top: 5px;">${gcodePath}</span>
             `;
             jobsList.insertBefore(jobItem, jobsList.firstChild);
         }
+
+            async function startPrint(gcodePath, filename, btn) {
+                if (!confirm(`Start printing ${filename} immediately?`)) return;
+
+                btn.disabled = true;
+                btn.textContent = 'Starting...';
+
+                try {
+                    // Extract filename only in case full path is passed
+                    const nameOnly = filename.split('/').pop();
+
+                    // Call API
+                    const response = await fetch(`${API_BASE}/print-job/${nameOnly}`, {
+                        method: 'POST'
+                    });
+
+                    if (!response.ok) {
+                        const error = await response.json();
+                        throw new Error(error.detail || 'Failed to start print');
+                    }
+
+                    showMessage('success', `🚀 Print started: ${filename}`);
+                    btn.textContent = '✓ Started';
+
+                } catch (error) {
+                    showMessage('error', 'Failed to start print: ' + error.message);
+                    btn.disabled = false;
+                    btn.textContent = '🖨 Start Print';
+                }
+            }
 
         function downloadGcode(gcodePath, originalFilename) {
             // Create download link for local file
