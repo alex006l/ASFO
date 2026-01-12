@@ -280,6 +280,13 @@
                 <li class="empty-state">No jobs yet. Upload an STL file to get started!</li>
             </ul>
         </div>
+
+        <div class="card">
+            <h2>📜 Logs <button onclick="refreshLogs()" style="float: right; padding: 6px 12px; font-size: 0.9em;">🔄 Refresh</button></h2>
+            <div style="background: #0d0d0d; padding: 15px; border-radius: 6px; max-height: 400px; overflow-y: auto; font-family: 'Courier New', monospace; font-size: 0.85em;">
+                <pre id="logsContent" style="margin: 0; color: #e0e0e0; white-space: pre-wrap; word-wrap: break-word;">Loading logs...</pre>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -292,6 +299,7 @@
         document.addEventListener('DOMContentLoaded', () => {
             loadStatus();
             setupUpload();
+            loadLogs();
         });
 
         // Load version and status
@@ -455,6 +463,26 @@
             const statusDiv = document.getElementById('uploadStatus');
             statusDiv.className = type;
             statusDiv.textContent = message;
+        }
+
+        // Load logs
+        async function loadLogs() {
+            try {
+                const response = await fetch(`${API_BASE}/logs?lines=50`);
+                if (response.ok) {
+                    const logs = await response.text();
+                    document.getElementById('logsContent').textContent = logs || 'No logs available.';
+                } else {
+                    document.getElementById('logsContent').textContent = 'Failed to load logs.';
+                }
+            } catch (error) {
+                console.error('Failed to load logs:', error);
+                document.getElementById('logsContent').textContent = 'Error loading logs: ' + error.message;
+            }
+        }
+
+        function refreshLogs() {
+            loadLogs();
         }
     </script>
 </body>

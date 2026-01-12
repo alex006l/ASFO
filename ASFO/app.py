@@ -1,10 +1,13 @@
 """Main FastAPI application."""
 from fastapi import FastAPI, Depends, HTTPException, UploadFile, File
-from fastapi.responses import JSONResponse, FileResponse
+from fastapi.responses import JSONResponse, FileResponse, PlainTextResponse
 from fastapi.staticfiles import StaticFiles
 from sqlmodel import Session
 from pathlib import Path
 import uuid
+import logging
+import sys
+from datetime import datetime
 
 from .database import init_db, get_session
 from .models import (
@@ -24,6 +27,22 @@ from .calibration import CalibrationPrintGenerator
 from .config import STL_TEMP_DIR, DEFAULT_MOONRAKER_URL
 from .version import get_version_info, check_for_updates
 
+# Setup logging
+LOG_DIR = Path("/var/lib/ASFO/logs")
+LOG_DIR.mkdir(parents=True, exist_ok=True)
+LOG_FILE = LOG_DIR / "asfo.log"
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler(LOG_FILE),
+        logging.StreamHandler(sys.stdout)
+    ]
+)
+logger = logging.getLogger("ASFO")
+
 app = FastAPI(
     title="Slicer Service",
     description="CuraEngine slicing service with feedback-driven profile optimization",
@@ -38,13 +57,18 @@ if static_dir.exists():
 # Initialize DB on startup
 @app.on_event("startup")
 def on_startup():
+    logger.info("Starting ASFO Slicer Service")
+    version_info = get_version_info()
+    logger.info(f"Version: {version_info.get('version')} (commit: {version_info.get('commit')})")
     init_db()
+    logger.info("Database initialized")
 
 
 @app.get("/")
 def root():
     """Health check and version info."""
     version_info = get_version_info()
+    logger.debug("Health check requested")
     return {
         "status": "ok",
         "service": "ASFO",
@@ -57,7 +81,24 @@ def root():
 @app.get("/version")
 def get_version():
     """Get detailed version information."""
+    logger.debug("Version info requested")
     return get_version_info()
+
+
+@app.get("/logs", response_class=PlainTextResponse)
+def get_logs(lines: int = 100):
+    """Get recent log entries."""
+    logger.info(f"Log retrieval requested (last {lines} lines)")
+    try:
+        with open(LOG_FILE, 'r') as f:
+            all_lines = f.readlines()
+            recent_lines = all_lines[-lines:] if len(all_lines) > lines else all_lines
+            return ''.join(recent_lines)
+    except FileNotFoundError:
+        return "No logs available yet."
+    except Exception as e:
+        logger.error(f"Error reading logs: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.get("/check-updates")
@@ -81,6 +122,8 @@ def slice_model(
     - Invokes CuraEngine
     - Returns G-code path and metadata
     """
+    logger.info(f"Slice request: {request.stl_path} | Printer: {request.printer_id} | Material: {request.material}")
+    
     # Get or create profile
     profile_mgr = ProfileManager(session)
     profile = profile_mgr.get_or_create_profile(
@@ -89,18 +132,22 @@ def slice_model(
         nozzle_size=request.nozzle_size,
         profile_name=request.profile
     )
+    logger.info(f"Using profile: {profile.profile_name} v{profile.version}")
     
     # Slice
     engine = CuraEngineWrapper()
     output_name = f"{Path(request.stl_path).stem}_{request.material}_{profile.version}"
     
     try:
+        logger.info(f"Starting slicing: {output_name}")
         result = engine.slice(
             stl_path=request.stl_path,
             profile=profile,
             output_name=output_name
         )
+        logger.info(f"Slicing complete: {result['gcode_path']} | Est. time: {result['estimated_time_seconds']}s")
     except Exception as e:
+        logger.error(f"Slicing failed: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Slicing failed: {str(e)}")
     
     return SliceResponse(
@@ -120,16 +167,24 @@ async def upload_stl(file: UploadFile = File(...)):
     
     Returns a temporary path that can be used in /slice endpoint.
     """
+    logger.info(f"Upload request: {file.filename} | Content-Type: {file.content_type}")
+    
     if not file.filename.lower().endswith(".stl"):
+        logger.warning(f"Rejected non-STL file: {file.filename}")
         raise HTTPException(status_code=400, detail="Only STL files allowed")
     
     # Save to temp directory
     file_id = str(uuid.uuid4())
     temp_path = STL_TEMP_DIR / f"{file_id}_{file.filename}"
     
-    with open(temp_path, "wb") as f:
-        content = await file.read()
-        f.write(content)
+    try:
+        with open(temp_path, "wb") as f:
+            content = await file.read()
+            f.write(content)
+        logger.info(f"File uploaded successfully: {temp_path} ({len(content)} bytes)")
+    except Exception as e:
+        logger.error(f"Failed to save uploaded file: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Upload failed: {str(e)}")
     
     return {"stl_path": str(temp_path), "filename": file.filename}
 
