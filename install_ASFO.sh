@@ -39,95 +39,25 @@ if ! id -u $SERVICE_USER >/dev/null 2>&1; then
   useradd --system --no-create-home --shell /usr/sbin/nologin $SERVICE_USER || true
 fi
 
-# Build CuraEngine
-if [ -f "/usr/local/bin/CuraEngine" ]; then
+# Install CuraEngine
+if command -v CuraEngine &> /dev/null || [ -f "/usr/local/bin/CuraEngine" ]; then
   echo "✅ CuraEngine already installed"
 else
-  echo "🔨 Building CuraEngine (this may take 15-30 minutes)..."
+  echo "🔨 Installing CuraEngine from Debian repository..."
   
-  # Clean up any previous failed attempts
-  if [ -d "$CURAENGINE_DIR" ]; then
-    echo "Cleaning previous CuraEngine directory..."
-    rm -rf $CURAENGINE_DIR
-  fi
-  
-  # Install Conan package manager (required for CuraEngine dependencies)
-  echo "Installing Conan package manager..."
-  # Always upgrade to ensure we have Conan 2.x
-  if ! pip3 install --break-system-packages --upgrade "conan>=2.7.0"; then
-    echo "❌ Failed to install Conan"
+  # Install cura-engine package from Debian repos
+  if ! apt-get install -y cura-engine; then
+    echo "❌ Failed to install CuraEngine package"
     exit 1
   fi
-  
-  # Clone CuraEngine
-  echo "Cloning CuraEngine..."
-  if ! git clone --depth 1 https://github.com/Ultimaker/CuraEngine.git $CURAENGINE_DIR; then
-    echo "❌ Failed to clone CuraEngine repository"
-    exit 1
-  fi
-  
-  cd $CURAENGINE_DIR
-  
-  # Set up Conan profile (Conan 2.x uses 'detect' command)
-  echo "Configuring Conan default profile..."
-  conan profile detect --force || echo "Profile already exists, continuing..."
-  
-  # Add Ultimaker's Conan remote repository (try multiple URLs)
-  echo "Adding Ultimaker Conan remote..."
-  conan remote add ultimaker https://artifactory.cloud.ultimaker.com/artifactory/api/conan/cura 2>/dev/null || \
-  conan remote add ultimaker https://conan-ultimaker.westeurope.cloudapp.azure.com/artifactory/api/conan/conan-ultimaker 2>/dev/null || \
-  echo "Remote already exists or couldn't be added, continuing..."
-  
-  # Install dependencies via Conan
-  echo "Installing CuraEngine dependencies via Conan..."
-  if ! conan install . --build=missing -s build_type=Release; then
-    echo "❌ Failed to install Conan dependencies"
-    cd -
-    rm -rf $CURAENGINE_DIR
-    exit 1
-  fi
-  
-  # Configure with CMake
-  echo "Configuring build with CMake..."
-  mkdir -p build
-  cd build
-  if ! cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=conan_toolchain.cmake -DCMAKE_PREFIX_PATH="$(pwd)"; then
-    echo "❌ CMake configuration failed"
-    echo "Check logs at: $CURAENGINE_DIR/build/CMakeFiles/CMakeOutput.log"
-    cd -
-    exit 1
-  fi
-  
-  # Compile
-  echo "Compiling CuraEngine (using $(nproc) cores)..."
-  if ! cmake --build . --config Release -j$(nproc); then
-    echo "❌ Compilation failed"
-    cd -
-    exit 1
-  fi
-  
-  # Verify binary was created
-  if [ ! -f "CuraEngine" ]; then
-    echo "❌ CuraEngine binary not found after build"
-    cd -
-    exit 1
-  fi
-  
-  # Install
-  echo "Installing CuraEngine to /usr/local/bin..."
-  if ! install -m 0755 CuraEngine /usr/local/bin/CuraEngine; then
-    echo "❌ Failed to install CuraEngine"
-    cd -
-    exit 1
-  fi
-  cd -
   
   # Verify installation
-  if ! /usr/local/bin/CuraEngine --version > /dev/null 2>&1; then
-    echo "⚠️  CuraEngine installed but --version check failed (this may be normal)"
+  if ! command -v CuraEngine &> /dev/null; then
+    echo "❌ CuraEngine not found after installation"
+    exit 1
   fi
   
-  echo "✅ CuraEngine installed to /usr/local/bin/CuraEngine"
+  echo "✅ CuraEngine installed successfully"
 fi
 
 # Clone or update the ASFO slicer service repo
@@ -168,14 +98,7 @@ if ! pip install -r $INSTALL_DIR/requirements.txt; then
   deactivate
   exit 1
 fi
-# Create Python virtual environment
-echo "🐍 Setting up Python environment..."
-if ! python3 -c "from ASFO.database import init_db; init_db()"; then
-  echo "⚠️  Database initialization failed (may already exist)"
-fi
-source $VENV_DIR/bin/activate
-pip install --upgrade pip setuptools wheel
-pip install -r $INSTALL_DIR/requirements.txt
+deactivate
 
 # Create data directories
 echo "📁 Creating data directories..."
