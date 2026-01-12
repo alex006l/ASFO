@@ -27,6 +27,7 @@ from .printer_registry import PrinterRegistry
 from .calibration import CalibrationPrintGenerator
 from .config import STL_TEMP_DIR, DEFAULT_MOONRAKER_URL
 from .version import get_version_info, check_for_updates
+from .thumbnail import ThumbnailGenerator
 
 # Setup logging
 LOG_DIR = Path("/var/lib/ASFO/logs")
@@ -211,6 +212,34 @@ async def upload_stl(file: UploadFile = File(...)):
         raise HTTPException(status_code=500, detail=f"Upload failed: {str(e)}")
     
     return {"stl_path": str(temp_path), "filename": file.filename}
+
+
+@app.get("/gcode-thumbnails/{gcode_filename}")
+def get_gcode_thumbnails(gcode_filename: str):
+    """
+    Extract and return thumbnails embedded in G-code file.
+    
+    Returns JSON with thumbnail sizes and base64-encoded image data.
+    """
+    from .config import GCODE_DIR
+    
+    gcode_path = GCODE_DIR / gcode_filename
+    
+    if not gcode_path.exists():
+        logger.warning(f"G-code file not found: {gcode_path}")
+        raise HTTPException(status_code=404, detail="G-code file not found")
+    
+    try:
+        thumbnails = ThumbnailGenerator.extract_thumbnails_from_gcode(gcode_path)
+        logger.info(f"Extracted {len(thumbnails)} thumbnails from {gcode_filename}")
+        return {
+            "filename": gcode_filename,
+            "thumbnails": thumbnails,
+            "count": len(thumbnails)
+        }
+    except Exception as e:
+        logger.error(f"Failed to extract thumbnails: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Thumbnail extraction failed: {str(e)}")
 
 
 @app.post("/upload-to-moonraker", response_model=UploadToMoonrakerResponse)

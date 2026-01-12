@@ -4,6 +4,7 @@ import io
 import math
 import struct
 from pathlib import Path
+from typing import Dict
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
@@ -111,3 +112,53 @@ class ThumbnailGenerator:
             
         except Exception as e:
             print(f"Failed to generate thumbnail: {e}")
+    
+    @staticmethod
+    def extract_thumbnails_from_gcode(gcode_path: Path) -> Dict[str, str]:
+        """
+        Extract thumbnails embedded in G-code (from Cura's CreateThumbnail script).
+        Returns dict with sizes as keys (e.g., '32x32', '400x400') and base64 data as values.
+        """
+        thumbnails = {}
+        try:
+            with open(gcode_path, 'r') as f:
+                current_thumb = None
+                current_size = None
+                thumb_data = []
+                
+                for line in f:
+                    line = line.strip()
+                    
+                    # Check for thumbnail begin
+                    if line.startswith("; thumbnail begin"):
+                        parts = line.split()
+                        if len(parts) >= 4:
+                            current_size = parts[3]  # e.g., "32x32"
+                            current_thumb = True
+                            thumb_data = []
+                    
+                    # Check for thumbnail end
+                    elif line.startswith("; thumbnail end"):
+                        if current_thumb and current_size:
+                            # Join all base64 chunks
+                            b64_data = ''.join(thumb_data)
+                            thumbnails[current_size] = b64_data
+                        current_thumb = None
+                        current_size = None
+                        thumb_data = []
+                    
+                    # Collect base64 data
+                    elif current_thumb and line.startswith(";"):
+                        # Remove leading "; " and collect data
+                        data_part = line[2:] if len(line) > 2 else ""
+                        if data_part:
+                            thumb_data.append(data_part)
+                    
+                    # Stop reading after we've found all thumbnails (optimization)
+                    elif not line.startswith(";") and thumbnails:
+                        break
+                        
+        except Exception as e:
+            print(f"Failed to extract thumbnails: {e}")
+        
+        return thumbnails

@@ -72,7 +72,23 @@ class CuraEngineWrapper:
                 "skirt_brim_minimal_length": { "default_value": 250 },
                 "support_enable": { "default_value": False },
                 "infill_before_walls": { "default_value": False },
-            }
+            },
+            "post_processing_scripts": [
+                {
+                    "script": "CreateThumbnail",
+                    "parameters": {
+                        "width": 32,
+                        "height": 32
+                    }
+                },
+                {
+                    "script": "CreateThumbnail",
+                    "parameters": {
+                        "width": 400,
+                        "height": 400
+                    }
+                }
+            ]
         }
         
         profile_file = PROFILES_DIR / f"profile_{profile.printer_id}_{profile.material}_v{profile.version}.json"
