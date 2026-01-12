@@ -36,6 +36,7 @@ class CuraEngineWrapper:
                 "mesh_position_x": { "label": "Mesh Position X", "type": "float", "default_value": 0 },
                 "mesh_position_y": { "label": "Mesh Position Y", "type": "float", "default_value": 0 },
                 "mesh_position_z": { "label": "Mesh Position Z", "type": "float", "default_value": 0 },
+                "center_object": { "label": "Center Object", "type": "bool", "default_value": True },
                 
                 # Extrusion Settings
                 "layer_height": { "label": "Layer Height", "type": "float", "default_value": profile.layer_height },
