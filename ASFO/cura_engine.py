@@ -18,38 +18,46 @@ class CuraEngineWrapper:
         # Simplified CuraEngine settings
         # In production, use full fdmprinter.def.json base + overrides
         settings = {
+        settings = {
             "settings": {
                 # Machine Settings
-                "machine_extruder_count": {"default_value": 1},
-                "machine_heated_bed": {"default_value": True},
-                "machine_width": {"default_value": 220},
-                "machine_depth": {"default_value": 220},
-                "machine_height": {"default_value": 250},
-                "machine_center_is_zero": {"default_value": False},
-                "machine_shape": {"default_value": "rectangular"},
-                "machine_nozzle_size": {"default_value": 0.4},
-                "machine_filament_diameter": {"default_value": 1.75},
-                # Mesh settings required by CuraEngine 4.x
-                "mesh_rotation_matrix": {"default_value": [[1,0,0], [0,1,0], [0,0,1]]},
-                "mesh_position_x": {"default_value": 0},
-                "mesh_position_y": {"default_value": 0},
-                "mesh_position_z": {"default_value": 0},
+                "machine_extruder_count": { "label": "Extruder Count", "type": "int", "default_value": 1 },
+                "machine_heated_bed": { "label": "Heated Bed", "type": "bool", "default_value": True },
+                "machine_width": { "label": "Machine Width", "type": "float", "default_value": 220 },
+                "machine_depth": { "label": "Machine Depth", "type": "float", "default_value": 220 },
+                "machine_height": { "label": "Machine Height", "type": "float", "default_value": 250 },
+                "machine_center_is_zero": { "label": "Center Zero", "type": "bool", "default_value": False },
+                "machine_shape": { "label": "Shape", "type": "str", "default_value": "rectangular" },
+                "machine_nozzle_size": { "label": "Nozzle Size", "type": "float", "default_value": 0.4 },
+                "machine_filament_diameter": { "label": "Filament Diameter", "type": "float", "default_value": 1.75 },
+                
+                # Mesh settings required by CuraEngine
+                "mesh_rotation_matrix": { "label": "Mesh Rotation Matrix", "type": "str", "default_value": "[[1,0,0], [0,1,0], [0,0,1]]" },
+                "mesh_position_x": { "label": "Mesh Position X", "type": "float", "default_value": 0 },
+                "mesh_position_y": { "label": "Mesh Position Y", "type": "float", "default_value": 0 },
+                "mesh_position_z": { "label": "Mesh Position Z", "type": "float", "default_value": 0 },
                 
                 # Extrusion Settings
-                "layer_height": {"default_value": profile.layer_height},
-                "wall_thickness": {"default_value": profile.wall_thickness},
-                "top_bottom_thickness": {"default_value": profile.top_bottom_thickness},
-                "infill_sparse_density": {"default_value": profile.infill_density},
-                "speed_print": {"default_value": profile.print_speed},
-                "speed_travel": {"default_value": profile.travel_speed},
-                "material_print_temperature": {"default_value": profile.nozzle_temp},
-                "material_bed_temperature": {"default_value": profile.bed_temp},
-                "retraction_amount": {"default_value": profile.retraction_distance},
-                "retraction_speed": {"default_value": profile.retraction_speed},
-                "material_flow": {"default_value": profile.extrusion_multiplier * 100},
-                "speed_layer_0": {"default_value": profile.first_layer_speed},
-                "layer_height_0": {"default_value": profile.first_layer_height},
+                "layer_height": { "label": "Layer Height", "type": "float", "default_value": profile.layer_height },
+                "wall_thickness": { "label": "Wall Thickness", "type": "float", "default_value": profile.wall_thickness },
+                "top_bottom_thickness": { "label": "Top/Bottom Thickness", "type": "float", "default_value": profile.top_bottom_thickness },
+                "infill_sparse_density": { "label": "Infill Density", "type": "float", "default_value": profile.infill_density },
+                "speed_print": { "label": "Print Speed", "type": "float", "default_value": profile.print_speed },
+                "speed_travel": { "label": "Travel Speed", "type": "float", "default_value": profile.travel_speed },
+                "material_print_temperature": { "label": "Nozzle Temperature", "type": "float", "default_value": profile.nozzle_temp },
+                "material_bed_temperature": { "label": "Bed Temperature", "type": "float", "default_value": profile.bed_temp },
+                "retraction_amount": { "label": "Retraction Amount", "type": "float", "default_value": profile.retraction_distance },
+                "retraction_speed": { "label": "Retraction Speed", "type": "float", "default_value": profile.retraction_speed },
+                "material_flow": { "label": "Material Flow", "type": "float", "default_value": profile.extrusion_multiplier * 100 },
+                "speed_layer_0": { "label": "Initial Layer Speed", "type": "float", "default_value": profile.first_layer_speed },
+                "layer_height_0": { "label": "Initial Layer Height", "type": "float", "default_value": profile.first_layer_height },
+                
+                # Dependencies that prevent errors
+                "skirt_brim_minimal_length": { "label": "Skirt/Brim Min Length", "type": "float", "default_value": 250 },
+                "support_enable": { "label": "Enable Support", "type": "bool", "default_value": False },
+                "infill_before_walls": { "label": "Infill Before Walls", "type": "bool", "default_value": False },
             }
+        }
         }
         
         profile_file = PROFILES_DIR / f"profile_{profile.printer_id}_{profile.material}_v{profile.version}.json"
