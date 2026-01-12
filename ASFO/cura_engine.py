@@ -19,6 +19,18 @@ class CuraEngineWrapper:
         # In production, use full fdmprinter.def.json base + overrides
         settings = {
             "settings": {
+                # Machine Settings
+                "machine_extruder_count": {"default_value": 1},
+                "machine_heated_bed": {"default_value": True},
+                "machine_width": {"default_value": 220},
+                "machine_depth": {"default_value": 220},
+                "machine_height": {"default_value": 250},
+                "machine_center_is_zero": {"default_value": False},
+                "machine_shape": {"default_value": "rectangular"},
+                "machine_nozzle_size": {"default_value": 0.4},
+                "machine_filament_diameter": {"default_value": 1.75},
+                
+                # Extrusion Settings
                 "layer_height": {"default_value": profile.layer_height},
                 "wall_thickness": {"default_value": profile.wall_thickness},
                 "top_bottom_thickness": {"default_value": profile.top_bottom_thickness},
