@@ -29,6 +29,11 @@ class CuraEngineWrapper:
                 "machine_shape": {"default_value": "rectangular"},
                 "machine_nozzle_size": {"default_value": 0.4},
                 "machine_filament_diameter": {"default_value": 1.75},
+                # Mesh settings required by CuraEngine 4.x
+                "mesh_rotation_matrix": {"default_value": [[1,0,0], [0,1,0], [0,0,1]]},
+                "mesh_position_x": {"default_value": 0},
+                "mesh_position_y": {"default_value": 0},
+                "mesh_position_z": {"default_value": 0},
                 
                 # Extrusion Settings
                 "layer_height": {"default_value": profile.layer_height},
