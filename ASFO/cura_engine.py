@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Dict, Any, Optional
 from .config import CURAENGINE_PATH, PROFILES_DIR, GCODE_DIR
 from .models import PrintProfile
-from .thumbnail import ThumbnailGenerator
+from .postprocessing.thumbnail_generator import ThumbnailGenerator
 
 FDMPRINTER_URL = "https://raw.githubusercontent.com/Ultimaker/Cura/4.13/resources/definitions/fdmprinter.def.json"
 FDMEXTRUDER_URL = "https://raw.githubusercontent.com/Ultimaker/Cura/4.13/resources/definitions/fdmextruder.def.json"
@@ -111,10 +111,11 @@ class CuraEngineWrapper:
             result = subprocess.run(cmd, capture_output=True, text=True, timeout=300, check=True)
             print(f"CuraEngine completed. Output file: {output_path}")
             
-            # Inject thumbnails
+            # Inject thumbnails using post-processing
             try:
                 print(f"Starting thumbnail injection...")
-                ThumbnailGenerator.inject_thumbnail(output_path, Path(stl_path))
+                thumbnail_gen = ThumbnailGenerator(sizes=[(32, 32), (300, 300)])
+                thumbnail_gen.inject_into_gcode(output_path, Path(stl_path))
                 print(f"Thumbnail injection completed successfully")
             except Exception as e:
                 print(f"Warning: Thumbnail injection failed: {e}")
