@@ -10,8 +10,10 @@ from .models import PrintProfile
 from .thumbnail import ThumbnailGenerator
 
 FDMPRINTER_URL = "https://raw.githubusercontent.com/Ultimaker/Cura/4.13/resources/definitions/fdmprinter.def.json"
+FDMEXTRUDER_URL = "https://raw.githubusercontent.com/Ultimaker/Cura/4.13/resources/definitions/fdmextruder.def.json"
 DEFS_DIR = Path(__file__).parent / "definitions"
 DEF_FILE = DEFS_DIR / "fdmprinter.def.json"
+EXTRUDER_DEF_FILE = DEFS_DIR / "fdmextruder.def.json"
 
 class CuraEngineWrapper:
     """Wrapper for CuraEngine CLI."""
@@ -21,23 +23,32 @@ class CuraEngineWrapper:
         self._ensure_definitions()
 
     def _ensure_definitions(self):
-        """Ensure fdmprinter.def.json exists."""
+        """Ensure base definitions exist."""
         if not DEFS_DIR.exists():
             try:
                 DEFS_DIR.mkdir(parents=True, exist_ok=True)
             except OSError:
                 pass 
         
+        ctx = ssl.create_default_context()
+        ctx.check_hostname = False
+        ctx.verify_mode = ssl.CERT_NONE
+
         if not DEF_FILE.exists():
             print(f"Downloading base definition from {FDMPRINTER_URL}...")
             try:
-                ctx = ssl.create_default_context()
-                ctx.check_hostname = False
-                ctx.verify_mode = ssl.CERT_NONE
                 with urllib.request.urlopen(FDMPRINTER_URL, context=ctx) as response, open(DEF_FILE, 'wb') as out_file:
                     out_file.write(response.read())
             except Exception as e:
                 print(f"Warning: Failed to download base definition: {e}")
+
+        if not EXTRUDER_DEF_FILE.exists():
+            print(f"Downloading extruder definition from {FDMEXTRUDER_URL}...")
+            try:
+                with urllib.request.urlopen(FDMEXTRUDER_URL, context=ctx) as response, open(EXTRUDER_DEF_FILE, 'wb') as out_file:
+                    out_file.write(response.read())
+            except Exception as e:
+                print(f"Warning: Failed to download extruder definition: {e}")
 
     def generate_profile_json(self, profile: PrintProfile) -> Path:
         """Generate CuraEngine JSON config from profile."""
@@ -86,8 +97,13 @@ class CuraEngineWrapper:
         profile_json = self.generate_profile_json(profile)
         output_path = GCODE_DIR / f"{output_name}.gcode"
         cmd = [str(self.curaengine_path), "slice"]
+        
+        # Load base definitions
         if DEF_FILE.exists():
             cmd.extend(["-j", str(DEF_FILE)])
+        if EXTRUDER_DEF_FILE.exists():
+            cmd.extend(["-j", str(EXTRUDER_DEF_FILE)])
+
         cmd.extend(["-j", str(profile_json), "-o", str(output_path), "-l", str(stl_path)])
         
         try:
