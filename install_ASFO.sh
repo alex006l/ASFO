@@ -51,24 +51,64 @@ else
     rm -rf $CURAENGINE_DIR
   fi
   
-  # Clone with submodules to get all dependencies
-  # Note: --depth 1 with --recursive can be problematic, so we clone then init submodules
+  # Clone CuraEngine
   echo "Cloning CuraEngine..."
-  git clone --depth 1 https://github.com/Ultimaker/CuraEngine.git $CURAENGINE_DIR
+  if ! git clone --depth 1 https://github.com/Ultimaker/CuraEngine.git $CURAENGINE_DIR; then
+    echo "❌ Failed to clone CuraEngine repository"
+    exit 1
+  fi
   
+  # Initialize submodules (includes standardprojectsettings and other dependencies)
   echo "Fetching submodule dependencies..."
   cd $CURAENGINE_DIR
-  git submodule update --init --recursive --depth 1
+  if ! git submodule update --init --recursive --depth 1; then
+    echo "❌ Failed to initialize git submodules"
+    cd -
+    rm -rf $CURAENGINE_DIR
+    exit 1
+  fi
   cd -
   
-  # Build
-  echo "Building CuraEngine..."
+  # Configure with CMake
+  echo "Configuring build with CMake..."
   mkdir -p $CURAENGINE_DIR/build
   cd $CURAENGINE_DIR/build
-  cmake .. -DCMAKE_BUILD_TYPE=Release
-  make -j$(nproc)
-  install -m 0755 CuraEngine /usr/local/bin/CuraEngine
+  if ! cmake .. -DCMAKE_BUILD_TYPE=Release; then
+    echo "❌ CMake configuration failed"
+    echo "Check logs at: $CURAENGINE_DIR/build/CMakeFiles/CMakeOutput.log"
+    cd -
+    exit 1
+  fi
+  
+  # Compile
+  echo "Compiling CuraEngine (using $(nproc) cores)..."
+  if ! make -j$(nproc); then
+    echo "❌ Compilation failed"
+    cd -
+    exit 1
+  fi
+  
+  # Verify binary was created
+  if [ ! -f "CuraEngine" ]; then
+    echo "❌ CuraEngine binary not found after build"
+    cd -
+    exit 1
+  fi
+  
+  # Install
+  echo "Installing CuraEngine to /usr/local/bin..."
+  if ! install -m 0755 CuraEngine /usr/local/bin/CuraEngine; then
+    echo "❌ Failed to install CuraEngine"
+    cd -
+    exit 1
+  fi
   cd -
+  
+  # Verify installation
+  if ! /usr/local/bin/CuraEngine --version > /dev/null 2>&1; then
+    echo "⚠️  CuraEngine installed but --version check failed (this may be normal)"
+  fi
+  
   echo "✅ CuraEngine installed to /usr/local/bin/CuraEngine"
 fi
 
@@ -77,17 +117,38 @@ echo "📥 Downloading ASFO slicer service..."
 if [ -d "$INSTALL_DIR/.git" ]; then
   echo "Updating existing installation..."
   cd $INSTALL_DIR
-  git fetch origin $BRANCH
-  git reset --hard origin/$BRANCH
+  if ! git fetch origin $BRANCH; then
+    echo "⚠️  Git fetch failed, continuing with existing version"
+  else
+    git reset --hard origin/$BRANCH
+  fi
   cd -
 else
   rm -rf $INSTALL_DIR
-  git clone --depth 1 --branch $BRANCH $REPO_URL $INSTALL_DIR
+  if ! git clone --depth 1 --branch $BRANCH $REPO_URL $INSTALL_DIR; then
+    echo "❌ Failed to clone ASFO repository"
+if ! python3 -m venv $VENV_DIR; then
+  echo "❌ Failed to create virtual environment"
+  exit 1
 fi
 
+source $VENV_DIR/bin/activate
+if ! pip install --upgrade pip setuptools wheel; then
+  echo "❌ Failed to upgrade pip"
+  deactivate
+  exit 1
+fi
+
+if ! pip install -r $INSTALL_DIR/requirements.txt; then
+  echo "❌ Failed to install Python dependencies"
+  deactivate
+  exit 1
+fi
 # Create Python virtual environment
 echo "🐍 Setting up Python environment..."
-python3 -m venv $VENV_DIR
+if ! python3 -c "from ASFO.database import init_db; init_db()"; then
+  echo "⚠️  Database initialization failed (may already exist)"
+fi
 source $VENV_DIR/bin/activate
 pip install --upgrade pip setuptools wheel
 pip install -r $INSTALL_DIR/requirements.txt
