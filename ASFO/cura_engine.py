@@ -107,16 +107,23 @@ class CuraEngineWrapper:
         cmd.extend(["-j", str(profile_json), "-o", str(output_path), "-l", str(stl_path)])
         
         try:
+            print(f"Running CuraEngine: {' '.join(str(x) for x in cmd)}")
             result = subprocess.run(cmd, capture_output=True, text=True, timeout=300, check=True)
+            print(f"CuraEngine completed. Output file: {output_path}")
             
             # Inject thumbnails
             try:
+                print(f"Starting thumbnail injection...")
                 ThumbnailGenerator.inject_thumbnail(output_path, Path(stl_path))
+                print(f"Thumbnail injection completed successfully")
             except Exception as e:
                 print(f"Warning: Thumbnail injection failed: {e}")
+                import traceback
+                traceback.print_exc()
 
             estimated_time = self._parse_time_from_output(result.stdout)
             filament_length = self._parse_filament_from_output(result.stdout)
+            print(f"Slicing complete: {output_path}")
             return {
                 "gcode_path": str(output_path),
                 "estimated_time_seconds": estimated_time,
