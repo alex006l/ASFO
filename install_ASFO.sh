@@ -69,9 +69,10 @@ else
   
   cd $CURAENGINE_DIR
   
-  # Set up Conan profile
-  echo "Configuring Conan..."
-  conan profile detect --force || true
+  # Set up Conan profile (Conan 1.x uses 'new' command, not 'detect')
+  echo "Configuring Conan default profile..."
+  conan profile new default --detect --force || echo "Profile already exists, continuing..."
+  conan profile update settings.compiler.libcxx=libstdc++11 default || true
   
   # Install dependencies via Conan
   echo "Installing CuraEngine dependencies via Conan..."
