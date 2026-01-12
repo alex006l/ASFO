@@ -147,7 +147,6 @@ systemctl enable ASFO.service
 echo "🚀 Starting ASFO slicer service..."
 systemctl start ASFO
 
-[Insta3
 if systemctl is-active --quiet ASFO.service; then
   echo ""
   echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
