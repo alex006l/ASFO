@@ -34,18 +34,18 @@
 ### One-Line Install (Recommended)
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/YOUR_USERNAME/slicer-service/main/install_slicer_service.sh | sudo bash
+curl -fsSL https://raw.githubusercontent.com/alex006l/ASFO/main/install_slicer_service.sh | sudo bash
 ```
 
 Or with wget:
 ```bash
-wget -O - https://raw.githubusercontent.com/YOUR_USERNAME/slicer-service/main/install_slicer_service.sh | sudo bash
+wget -O - https://raw.githubusercontent.com/alex006l/ASFO/main/install_slicer_service.sh | sudo bash
 ```
 
 ### Manual Install
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/slicer-service.git
+git clone https://github.com/alex006l/ASFO.git
 cd slicer-service
 sudo ./install_slicer_service.sh
 ```

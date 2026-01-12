@@ -5,7 +5,7 @@ set -euo pipefail
 # Usage: curl -fsSL https://raw.githubusercontent.com/YOUR_USERNAME/slicer-service/main/install_slicer_service.sh | sudo bash
 #    or: wget -O - https://raw.githubusercontent.com/YOUR_USERNAME/slicer-service/main/install_slicer_service.sh | sudo bash
 
-REPO_URL=${REPO_URL:-"https://github.com/YOUR_USERNAME/slicer-service.git"}
+REPO_URL=${REPO_URL:-"https://github.com/alex006l/ASFO.git "}
 BRANCH=${BRANCH:-"main"}
 INSTALL_DIR=/opt/slicer_service
 VENV_DIR=$INSTALL_DIR/venv

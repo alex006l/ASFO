@@ -46,12 +46,12 @@ A standalone slicing service that:
 
 **Raspberry Pi (one-line install):**
 ```bash
-curl -fsSL https://raw.githubusercontent.com/YOUR_USERNAME/slicer-service/main/install_slicer_service.sh | sudo bash
+curl -fsSL https://raw.githubusercontent.com/alex006l/ASFO/main/install_slicer_service.sh | sudo bash
 ```
 
 **Local development:**
 ```bash
-git clone https://github.com/YOUR_USERNAME/slicer-service.git
+git clone https://github.com/alex006l/ASFO.git
 cd slicer-service
 python3 -m venv venv
 source venv/bin/activate
