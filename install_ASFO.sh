@@ -72,9 +72,11 @@ else
   echo "Configuring Conan default profile..."
   conan profile detect --force || echo "Profile already exists, continuing..."
   
-  # Add Ultimaker's Conan remote repository
+  # Add Ultimaker's Conan remote repository (try multiple URLs)
   echo "Adding Ultimaker Conan remote..."
-  conan remote add ultimaker https://conan-ultimaker.artfactory.io/artifactory/api/conan/conan-ultimaker 2>/dev/null || echo "Remote already exists, continuing..."
+  conan remote add ultimaker https://artifactory.cloud.ultimaker.com/artifactory/api/conan/cura 2>/dev/null || \
+  conan remote add ultimaker https://conan-ultimaker.westeurope.cloudapp.azure.com/artifactory/api/conan/conan-ultimaker 2>/dev/null || \
+  echo "Remote already exists or couldn't be added, continuing..."
   
   # Install dependencies via Conan
   echo "Installing CuraEngine dependencies via Conan..."
