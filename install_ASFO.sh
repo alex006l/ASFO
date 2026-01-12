@@ -44,10 +44,18 @@ if [ -f "/usr/local/bin/CuraEngine" ]; then
   echo "✅ CuraEngine already installed"
 else
   echo "🔨 Building CuraEngine (this may take 10-20 minutes)..."
-  if [ ! -d "$CURAENGINE_DIR" ]; then
-    git clone --depth 1 https://github.com/Ultimaker/CuraEngine.git $CURAENGINE_DIR
+  
+  # Clean up any previous failed attempts
+  if [ -d "$CURAENGINE_DIR" ]; then
+    echo "Cleaning previous CuraEngine directory..."
+    rm -rf $CURAENGINE_DIR
   fi
   
+  # Clone with submodules to get all dependencies
+  echo "Cloning CuraEngine with dependencies..."
+  git clone --recursive --depth 1 https://github.com/Ultimaker/CuraEngine.git $CURAENGINE_DIR
+  
+  # Build
   mkdir -p $CURAENGINE_DIR/build
   cd $CURAENGINE_DIR/build
   cmake .. -DCMAKE_BUILD_TYPE=Release
