@@ -283,7 +283,8 @@
     </div>
 
     <script>
-        const API_BASE = window.location.origin.replace(':80', ':8080');
+        // API base is same origin since UI is served by the API server
+        const API_BASE = window.location.origin;
         let selectedFile = null;
 
         // Initialize
