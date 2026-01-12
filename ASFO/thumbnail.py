@@ -82,10 +82,10 @@ class ThumbnailGenerator:
         try:
             vertices = ThumbnailGenerator.load_stl(stl_path)
             
-            # Generate 32x32 (mini) and 300x300 (large)
+            # Generate 32x32 (mini) and 400x400 (large)
             images = [
                 (32, 32, ThumbnailGenerator.generate_image(vertices, 32, 32)),
-                (300, 300, ThumbnailGenerator.generate_image(vertices, 300, 300))
+                (400, 400, ThumbnailGenerator.generate_image(vertices, 400, 400))
             ]
             
             headers = []

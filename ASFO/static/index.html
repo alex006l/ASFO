@@ -653,8 +653,19 @@
                 const thumbContainer = document.getElementById(`thumb-${gcodeFilename}`);
 
                 if (data.thumbnails && Object.keys(data.thumbnails).length > 0) {
-                    // Prefer larger thumbnail (400x400) if available, otherwise use any available
-                    const thumbSize = data.thumbnails['400x400'] ? '400x400' : Object.keys(data.thumbnails)[0];
+                    // Find the largest thumbnail
+                    let thumbSize = Object.keys(data.thumbnails)[0];
+                    let maxPixels = 0;
+                    
+                    for (const size of Object.keys(data.thumbnails)) {
+                        const [w, h] = size.split('x').map(Number);
+                        const pixels = w * h;
+                        if (pixels > maxPixels) {
+                            maxPixels = pixels;
+                            thumbSize = size;
+                        }
+                    }
+                    
                     const base64Data = data.thumbnails[thumbSize];
 
                     thumbContainer.innerHTML = `<img src="data:image/png;base64,${base64Data}" style="max-width: 100%; max-height: 100%; border-radius: 4px;" alt="Thumbnail">`;
