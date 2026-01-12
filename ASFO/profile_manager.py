@@ -1,6 +1,7 @@
 """Profile management and mutation logic."""
 from typing import Optional, List
 from sqlmodel import Session, select
+from datetime import datetime
 from .models import PrintProfile, PrintFeedback
 
 
@@ -68,6 +69,7 @@ class ProfileManager:
             "extrusion_multiplier": 1.0,
             "first_layer_speed": 20.0,
             "first_layer_height": 0.2,
+            "created_at": datetime.utcnow(),  # Fix SQLModel default_factory issue
         }
         
         # Material-specific overrides
