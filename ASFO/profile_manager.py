@@ -50,8 +50,13 @@ class ProfileManager:
         nozzle_size: float,
         profile_name: str
     ) -> PrintProfile:
-        """Create default profile based on material."""
-        # Base defaults
+        """
+        Create default profile based on material.
+        Includes Klipper-recommended settings:
+        - Jerk disabled (Klipper uses square_corner_velocity)
+        - Optimized for Klipper firmware
+        """
+        # Base defaults (Klipper-optimized)
         defaults = {
             "printer_id": printer_id,
             "material": material,
@@ -62,8 +67,8 @@ class ProfileManager:
             "wall_thickness": 0.8,
             "top_bottom_thickness": 0.8,
             "infill_density": 20.0,
-            "print_speed": 50.0,
-            "travel_speed": 150.0,
+            "print_speed": 60.0,  # Increased for Klipper (was 50)
+            "travel_speed": 200.0,  # Increased for Klipper (was 150)
             "retraction_distance": 5.0,
             "retraction_speed": 45.0,
             "extrusion_multiplier": 1.0,

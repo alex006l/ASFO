@@ -8,6 +8,7 @@ from typing import Dict, Any, Optional
 from .config import CURAENGINE_PATH, PROFILES_DIR, GCODE_DIR
 from .models import PrintProfile
 from .postprocessing.thumbnail_generator import ThumbnailGenerator
+from .postprocessing.klipper_preprocessor import process_gcode_for_klipper
 
 FDMPRINTER_URL = "https://raw.githubusercontent.com/Ultimaker/Cura/4.13/resources/definitions/fdmprinter.def.json"
 FDMEXTRUDER_URL = "https://raw.githubusercontent.com/Ultimaker/Cura/4.13/resources/definitions/fdmextruder.def.json"
@@ -119,6 +120,21 @@ class CuraEngineWrapper:
                 print(f"Thumbnail injection completed successfully")
             except Exception as e:
                 print(f"Warning: Thumbnail injection failed: {e}")
+                import traceback
+                traceback.print_exc()
+            
+            # Apply Klipper preprocessing
+            try:
+                print(f"Starting Klipper preprocessing...")
+                process_gcode_for_klipper(
+                    Path(output_path),
+                    add_set_print_stats_info=True,
+                    add_timelapse_take_frame=True,
+                    add_moonraker_metadata=True
+                )
+                print(f"Klipper preprocessing completed successfully")
+            except Exception as e:
+                print(f"Warning: Klipper preprocessing failed: {e}")
                 import traceback
                 traceback.print_exc()
 

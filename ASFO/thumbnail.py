@@ -113,7 +113,7 @@ class ThumbnailGenerator:
             
             # Save to buffer
             buf = io.BytesIO()
-            plt.savefig(buf, format='jpg', dpi=100, facecolor='#252525', bbox_inches='tight', pad_inches=0)
+            plt.savefig(buf, format='png', dpi=100, facecolor='#252525', bbox_inches='tight', pad_inches=0)
             plt.close(fig)
             buf.seek(0)
             data = buf.read()
@@ -138,9 +138,10 @@ class ThumbnailGenerator:
             vertices = ThumbnailGenerator.load_stl(stl_path)
             print(f"Loaded {len(vertices)} triangles from STL")
             
-            # Generate 32x32 (mini) and 400x400 (large) - matching standard Cura/Mainsail sizes
+            # Generate thumbnails - Mainsail standard sizes
+            # Small (50x50) for file list, Large (300x300 or 400x400) for preview
             images = []
-            for w, h in [(32, 32), (400, 400)]:
+            for w, h in [(32, 32), (300, 300)]:
                 try:
                     img_data = ThumbnailGenerator.generate_image(vertices, w, h)
                     images.append((w, h, img_data))
@@ -156,9 +157,10 @@ class ThumbnailGenerator:
             print(f"Building thumbnail headers...")
             headers = []
             headers.append(";POSTPROCESSED")
-            headers.append("; [CreateThumbnail]")
-            headers.append("; [Cura_JPEG_Preview]")
-            headers.append("")
+            headers.append(";  [CreateThumbnail]")
+            headers.append(";  [Cura_JPEG_Preview]")
+            headers.append(";Generated with Cura_SteamEngine 4.13.0")
+            headers.append(";")
 
             for w, h, data in images:
                 b64 = base64.b64encode(data).decode('utf-8')
@@ -168,33 +170,28 @@ class ThumbnailGenerator:
                 for i in range(0, len(b64), 78):
                     headers.append(f"; {b64[i:i+78]}")
                 headers.append("; thumbnail end")
-                headers.append("")
+                headers.append(";")
             
             print(f"Reading existing G-code from {gcode_path}...")
             with open(gcode_path, 'r') as f:
                 lines = f.readlines()
             print(f"Read {len(lines)} lines of G-code")
             
-            # Find the insertion point (after header comments, before ;Generated)
-            insertion_index = 0
+            # Find and replace the ;Generated line
+            generated_index = -1
             for i, line in enumerate(lines):
-                # Look for the ;Generated line or first non-comment line
-                if line.startswith(';Generated') or (line.strip() and not line.startswith(';')):
-                    insertion_index = i
+                if line.startswith(';Generated'):
+                    generated_index = i
                     break
             
-            if insertion_index == 0:
-                # Fallback: insert after all leading comment lines
-                for i, line in enumerate(lines):
-                    if line.strip() and not line.startswith(';'):
-                        insertion_index = i
-                        break
-            
-            print(f"Inserting thumbnails at line {insertion_index}")
-            
-            # Insert thumbnail headers at the correct position
-            thumbnail_lines = [line + "\n" for line in headers]
-            new_lines = lines[:insertion_index] + thumbnail_lines + lines[insertion_index:]
+            if generated_index >= 0:
+                print(f"Replacing ;Generated line at index {generated_index}")
+                # Remove the original ;Generated line and insert our headers
+                new_lines = lines[:generated_index] + [line + "\n" for line in headers] + lines[generated_index+1:]
+            else:
+                # Fallback: insert at beginning if ;Generated not found
+                print("WARNING: ;Generated line not found, inserting at beginning")
+                new_lines = [line + "\n" for line in headers] + lines
             
             print(f"New content: {len(new_lines)} lines")
             

@@ -64,13 +64,14 @@ See [QUICKSTART.md](QUICKSTART.md) for full instructions.
 ## Features
 
 ✅ **CuraEngine integration** — proven, fast ARM-compatible slicer  
+✅ **Klipper-optimized** — automatic layer tracking, timelapse support, and metadata  
+✅ **Transparent thumbnails** — orange/coral 3D previews for Mainsail/Fluidd  
 ✅ **Multi-printer support** — per-printer profiles and feedback  
 ✅ **Filament-specific calibration** — pressure advance, flow, temperature per spool  
 ✅ **Auto-generated calibration prints** — from printer.cfg analysis  
 ✅ **Profile versioning** — every change is tracked and reversible  
 ✅ **Feedback-driven optimization** — real-world results improve profiles  
 ✅ **Rule-based mutations** — small, bounded, deterministic changes  
-✅ **Klipper integration** — pressure advance and advanced tuning  
 ✅ **Moonraker upload** — seamless integration with existing workflow  
 ✅ **Moonraker update manager** — update from Mainsail UI  
 ✅ **RESTful API** — easy integration with any UI  
@@ -114,6 +115,7 @@ The system applies small, reversible mutations:
 | [README.md](README.md) | This file - main overview |
 | [QUICKSTART.md](QUICKSTART.md) | Installation & usage guide |
 | [DEPLOYMENT.md](DEPLOYMENT.md) | GitHub publishing & deployment |
+| [KLIPPER_INTEGRATION.md](KLIPPER_INTEGRATION.md) | Klipper features & configuration |
 | [MAINSAIL_INTEGRATION.md](MAINSAIL_INTEGRATION.md) | UI integration guide |
 | [FILAMENT_CALIBRATION.md](FILAMENT_CALIBRATION.md) | Calibration workflow & guide |
 | [READY_TO_DEPLOY.md](READY_TO_DEPLOY.md) | Pre-publish checklist |
@@ -191,14 +193,15 @@ Environment variables:
 - [x] Filament-specific calibration
 - [x] Pressure advance testing
 - [x] Printer.cfg parsing
+- [x] Klipper integration (layer tracking, timelapse)
+- [x] Transparent thumbnails for Mainsail
 - [ ] Mainsail iframe UI
 - [ ] WebSocket for real-time progress
 - [ ] Advanced analytics dashboard
+- [ ] Object cancellation support
 - [ ] Cloud profile sync
 - [ ] Print farm management
-- [ ] Auto-analysis of calibration prints (camera)shboard
-- [ ] Cloud profile sync
-- [ ] Print farm management
+- [ ] Auto-analysis of calibration prints (camera)
 
 ## Publishing to GitHub
 
