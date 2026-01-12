@@ -8,7 +8,7 @@ import os
 def get_version_info() -> Dict[str, Any]:
     """Get current version info from git."""
     version_info = {
-        "version": "0.1.0",
+        "version": "1.1.0-3dviewer",
         "commit": None,
         "branch": None,
         "is_dirty": False,
