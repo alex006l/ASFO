@@ -4,3 +4,5 @@ httpx==0.28.0
 python-multipart==0.0.18
 pydantic==2.10.0
 sqlmodel==0.0.22
+matplotlib
+numpy

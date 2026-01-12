@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Dict, Any, Optional
 from .config import CURAENGINE_PATH, PROFILES_DIR, GCODE_DIR
 from .models import PrintProfile
+from .thumbnail import ThumbnailGenerator
 
 FDMPRINTER_URL = "https://raw.githubusercontent.com/Ultimaker/Cura/4.13/resources/definitions/fdmprinter.def.json"
 DEFS_DIR = Path(__file__).parent / "definitions"
@@ -72,23 +73,7 @@ class CuraEngineWrapper:
                 "skirt_brim_minimal_length": { "default_value": 250 },
                 "support_enable": { "default_value": False },
                 "infill_before_walls": { "default_value": False },
-            },
-            "post_processing_scripts": [
-                {
-                    "script": "CreateThumbnail",
-                    "parameters": {
-                        "width": 32,
-                        "height": 32
-                    }
-                },
-                {
-                    "script": "CreateThumbnail",
-                    "parameters": {
-                        "width": 400,
-                        "height": 400
-                    }
-                }
-            ]
+            }
         }
         
         profile_file = PROFILES_DIR / f"profile_{profile.printer_id}_{profile.material}_v{profile.version}.json"
@@ -97,7 +82,7 @@ class CuraEngineWrapper:
         
         return profile_file
     
-    def slice(self, stl_path: str, profile: PrintProfile, output_name: str) -> Dict[str, Any]:
+    def slice(self, stl_path: str, profile: PrintProfile, output_name: str, printer_capabilities: dict = None) -> Dict[str, Any]:
         profile_json = self.generate_profile_json(profile)
         output_path = GCODE_DIR / f"{output_name}.gcode"
         cmd = [str(self.curaengine_path), "slice"]
@@ -107,6 +92,13 @@ class CuraEngineWrapper:
         
         try:
             result = subprocess.run(cmd, capture_output=True, text=True, timeout=300, check=True)
+            
+            # Inject thumbnails
+            try:
+                ThumbnailGenerator.inject_thumbnail(output_path, Path(stl_path))
+            except Exception as e:
+                print(f"Warning: Thumbnail injection failed: {e}")
+
             estimated_time = self._parse_time_from_output(result.stdout)
             filament_length = self._parse_filament_from_output(result.stdout)
             return {
