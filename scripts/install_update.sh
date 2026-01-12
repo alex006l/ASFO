@@ -17,6 +17,8 @@ pip install --upgrade pip
 pip install -r "$INSTALL_DIR/requirements.txt" --upgrade
 
 # Run database migrations if needed
+cd "$INSTALL_DIR"
 python3 -c "from ASFO.database import init_db; init_db()" || echo "Database already initialized"
+cd -
 
 echo "ASFO Slicer Service dependencies updated successfully"
