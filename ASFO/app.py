@@ -368,6 +368,71 @@ def get_feedback_history(
     return {"feedback": feedback}
 
 
+@app.get("/pending-feedback")
+def get_pending_feedback(session: Session = Depends(get_session)):
+    """Get pending feedback requests for completed prints."""
+    from sqlmodel import select
+    from .models import PendingFeedback
+    
+    statement = (
+        select(PendingFeedback)
+        .where(PendingFeedback.dismissed == False)
+        .where(PendingFeedback.feedback_submitted == False)
+        .order_by(PendingFeedback.completed_at.desc())
+    )
+    
+    pending = session.exec(statement).all()
+    return {"pending_feedback": [
+        {
+            "id": p.id,
+            "filename": p.filename,
+            "printer_id": p.printer_id,
+            "started_at": p.started_at.isoformat(),
+            "completed_at": p.completed_at.isoformat(),
+            "state": p.state
+        }
+        for p in pending
+    ]}
+
+
+@app.post("/pending-feedback/{feedback_id}/dismiss")
+def dismiss_pending_feedback(
+    feedback_id: int,
+    session: Session = Depends(get_session)
+):
+    """Dismiss a pending feedback request."""
+    from .models import PendingFeedback
+    
+    pending = session.get(PendingFeedback, feedback_id)
+    if not pending:
+        raise HTTPException(status_code=404, detail="Pending feedback not found")
+    
+    pending.dismissed = True
+    session.add(pending)
+    session.commit()
+    
+    return {"success": True}
+
+
+@app.post("/pending-feedback/{feedback_id}/submit")
+def mark_feedback_submitted(
+    feedback_id: int,
+    session: Session = Depends(get_session)
+):
+    """Mark pending feedback as submitted."""
+    from .models import PendingFeedback
+    
+    pending = session.get(PendingFeedback, feedback_id)
+    if not pending:
+        raise HTTPException(status_code=404, detail="Pending feedback not found")
+    
+    pending.feedback_submitted = True
+    session.add(pending)
+    session.commit()
+    
+    return {"success": True}
+
+
 @app.post("/calibration/generate", response_model=GenerateCalibrationResponse)
 def generate_calibration_print(
     request: GenerateCalibrationRequest,

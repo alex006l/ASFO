@@ -220,3 +220,19 @@ class PrintFeedback(SQLModel, table=True):
     notes: Optional[str] = None
     
     created_at: datetime = SQLField(default_factory=datetime.utcnow)
+
+
+class PendingFeedback(SQLModel, table=True):
+    """Pending feedback requests for completed prints."""
+    __tablename__ = "pending_feedback"
+    
+    id: Optional[int] = SQLField(default=None, primary_key=True)
+    filename: str = SQLField(index=True)
+    printer_id: Optional[str] = None
+    started_at: datetime
+    completed_at: datetime
+    state: str  # complete, cancelled, error
+    dismissed: bool = False
+    feedback_submitted: bool = False
+    
+    created_at: datetime = SQLField(default_factory=datetime.utcnow)
