@@ -114,9 +114,12 @@ cd -
 
 # Set permissions
 echo "🔒 Setting permissions..."
-chown -R $SERVICE_USER:$SERVICE_USER $DATA_DIR $INSTALL_DIR
+# Data directory owned by asfo
+chown -R $SERVICE_USER:$SERVICE_USER $DATA_DIR
 
-# Make ASFO directory readable by all users (needed for Moonraker to read git info)
+# ASFO code directory: owned by pi (for Moonraker updates), readable by asfo
+chown -R pi:pi $INSTALL_DIR
+# Make sure asfo can read and execute
 chmod -R a+rX $INSTALL_DIR
 
 # Configure git safe directory for all users
