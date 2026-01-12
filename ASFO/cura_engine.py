@@ -18,8 +18,8 @@ class CuraEngineWrapper:
         # Simplified CuraEngine settings
         # In production, use full fdmprinter.def.json base + overrides
         settings = {
-        settings = {
             "settings": {
+
                 # Machine Settings
                 "machine_extruder_count": { "label": "Extruder Count", "type": "int", "default_value": 1 },
                 "machine_heated_bed": { "label": "Heated Bed", "type": "bool", "default_value": True },
