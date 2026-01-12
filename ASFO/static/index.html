@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ASFO Slicer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #121212;
+            color: #e0e0e0;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            background: #1e1e1e;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
+
+        h1 {
+            color: #00bcd4;
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #9e9e9e;
+            font-size: 0.9em;
+        }
+
+        .card {
+            background: #1e1e1e;
+            border-radius: 8px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
+
+        .card h2 {
+            color: #00bcd4;
+            margin-bottom: 15px;
+            font-size: 1.4em;
+        }
+
+        .upload-area {
+            border: 2px dashed #424242;
+            border-radius: 8px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: #252525;
+        }
+
+        .upload-area:hover {
+            border-color: #00bcd4;
+            background: #2a2a2a;
+        }
+
+        .upload-area.dragover {
+            border-color: #00bcd4;
+            background: #2a2a2a;
+            transform: scale(1.02);
+        }
+
+        .upload-icon {
+            font-size: 3em;
+            margin-bottom: 15px;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        button {
+            background: #00bcd4;
+            color: #121212;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 500;
+            transition: all 0.3s;
+            margin-top: 15px;
+        }
+
+        button:hover {
+            background: #00acc1;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,188,212,0.3);
+        }
+
+        button:disabled {
+            background: #424242;
+            color: #757575;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .jobs-list {
+            list-style: none;
+        }
+
+        .job-item {
+            background: #252525;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 6px;
+            border-left: 4px solid #424242;
+            transition: all 0.3s;
+        }
+
+        .job-item:hover {
+            transform: translateX(5px);
+            border-left-color: #00bcd4;
+        }
+
+        .job-item.completed {
+            border-left-color: #4caf50;
+        }
+
+        .job-item.processing {
+            border-left-color: #ff9800;
+        }
+
+        .job-item.failed {
+            border-left-color: #f44336;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.85em;
+            font-weight: 500;
+            margin-left: 10px;
+        }
+
+        .status-pending {
+            background: #424242;
+            color: #9e9e9e;
+        }
+
+        .status-processing {
+            background: rgba(255, 152, 0, 0.2);
+            color: #ff9800;
+        }
+
+        .status-completed {
+            background: rgba(76, 175, 80, 0.2);
+            color: #4caf50;
+        }
+
+        .status-failed {
+            background: rgba(244, 67, 54, 0.2);
+            color: #f44336;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .info-card {
+            background: #252525;
+            padding: 15px;
+            border-radius: 6px;
+            text-align: center;
+        }
+
+        .info-value {
+            font-size: 2em;
+            color: #00bcd4;
+            font-weight: 600;
+        }
+
+        .info-label {
+            color: #9e9e9e;
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #424242;
+            border-top-color: #00bcd4;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #757575;
+        }
+
+        .error {
+            background: rgba(244, 67, 54, 0.1);
+            border: 1px solid #f44336;
+            color: #f44336;
+            padding: 12px;
+            border-radius: 6px;
+            margin-top: 10px;
+        }
+
+        .success {
+            background: rgba(76, 175, 80, 0.1);
+            border: 1px solid #4caf50;
+            color: #4caf50;
+            padding: 12px;
+            border-radius: 6px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🔧 ASFO Slicer</h1>
+            <p class="subtitle">3D Model Slicing Service powered by CuraEngine</p>
+        </header>
+
+        <div class="card">
+            <h2>📊 Status</h2>
+            <div class="info-grid" id="statusGrid">
+                <div class="info-card">
+                    <div class="info-value" id="versionValue">-</div>
+                    <div class="info-label">Version</div>
+                </div>
+                <div class="info-card">
+                    <div class="info-value" id="jobsValue">-</div>
+                    <div class="info-label">Total Jobs</div>
+                </div>
+                <div class="info-card">
+                    <div class="info-value" id="queueValue">-</div>
+                    <div class="info-label">Queued</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>📤 Upload STL File</h2>
+            <div class="upload-area" id="uploadArea">
+                <div class="upload-icon">📦</div>
+                <p>Drop STL file here or click to browse</p>
+                <p style="color: #757575; font-size: 0.9em; margin-top: 10px;">Supported: .stl, .STL</p>
+                <input type="file" id="fileInput" accept=".stl,.STL">
+            </div>
+            <button id="uploadBtn" disabled>Upload & Slice</button>
+            <div id="uploadStatus"></div>
+        </div>
+
+        <div class="card">
+            <h2>📋 Recent Jobs</h2>
+            <ul class="jobs-list" id="jobsList">
+                <li class="empty-state">No jobs yet. Upload an STL file to get started!</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = window.location.origin.replace(':80', ':8080');
+        let selectedFile = null;
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            loadStatus();
+            loadJobs();
+            setupUpload();
+            setInterval(loadJobs, 5000); // Refresh jobs every 5 seconds
+        });
+
+        // Load version and status
+        async function loadStatus() {
+            try {
+                const response = await fetch(`${API_BASE}/version`);
+                const data = await response.json();
+                document.getElementById('versionValue').textContent = data.version;
+            } catch (error) {
+                console.error('Failed to load status:', error);
+            }
+        }
+
+        // Load jobs
+        async function loadJobs() {
+            try {
+                const response = await fetch(`${API_BASE}/jobs`);
+                const jobs = await response.json();
+                
+                document.getElementById('jobsValue').textContent = jobs.length;
+                document.getElementById('queueValue').textContent = 
+                    jobs.filter(j => j.status === 'pending' || j.status === 'processing').length;
+
+                const jobsList = document.getElementById('jobsList');
+                if (jobs.length === 0) {
+                    jobsList.innerHTML = '<li class="empty-state">No jobs yet. Upload an STL file to get started!</li>';
+                } else {
+                    jobsList.innerHTML = jobs.map(job => `
+                        <li class="job-item ${job.status}">
+                            <strong>${job.filename}</strong>
+                            <span class="status-badge status-${job.status}">${job.status}</span>
+                            <br>
+                            <small style="color: #9e9e9e;">Created: ${new Date(job.created_at).toLocaleString()}</small>
+                            ${job.gcode_path ? `<br><a href="${API_BASE}/download/gcode/${job.id}" style="color: #00bcd4;">Download G-code</a>` : ''}
+                        </li>
+                    `).join('');
+                }
+            } catch (error) {
+                console.error('Failed to load jobs:', error);
+            }
+        }
+
+        // Setup file upload
+        function setupUpload() {
+            const uploadArea = document.getElementById('uploadArea');
+            const fileInput = document.getElementById('fileInput');
+            const uploadBtn = document.getElementById('uploadBtn');
+
+            uploadArea.addEventListener('click', () => fileInput.click());
+
+            uploadArea.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                uploadArea.classList.add('dragover');
+            });
+
+            uploadArea.addEventListener('dragleave', () => {
+                uploadArea.classList.remove('dragover');
+            });
+
+            uploadArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                uploadArea.classList.remove('dragover');
+                if (e.dataTransfer.files.length > 0) {
+                    handleFileSelect(e.dataTransfer.files[0]);
+                }
+            });
+
+            fileInput.addEventListener('change', (e) => {
+                if (e.target.files.length > 0) {
+                    handleFileSelect(e.target.files[0]);
+                }
+            });
+
+            uploadBtn.addEventListener('click', uploadFile);
+        }
+
+        function handleFileSelect(file) {
+            if (!file.name.toLowerCase().endsWith('.stl')) {
+                showMessage('error', 'Please select an STL file');
+                return;
+            }
+            selectedFile = file;
+            document.getElementById('uploadBtn').disabled = false;
+            document.getElementById('uploadArea').querySelector('p').textContent = `Selected: ${file.name}`;
+        }
+
+        async function uploadFile() {
+            if (!selectedFile) return;
+
+            const uploadBtn = document.getElementById('uploadBtn');
+            uploadBtn.disabled = true;
+            uploadBtn.innerHTML = '<span class="loading"></span> Uploading...';
+
+            const formData = new FormData();
+            formData.append('file', selectedFile);
+
+            try {
+                const response = await fetch(`${API_BASE}/upload/stl`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    showMessage('success', `File uploaded successfully! Job ID: ${result.job_id}`);
+                    selectedFile = null;
+                    document.getElementById('fileInput').value = '';
+                    document.getElementById('uploadArea').querySelector('p').textContent = 'Drop STL file here or click to browse';
+                    loadJobs();
+                } else {
+                    const error = await response.json();
+                    showMessage('error', error.detail || 'Upload failed');
+                }
+            } catch (error) {
+                showMessage('error', 'Network error: ' + error.message);
+            } finally {
+                uploadBtn.disabled = false;
+                uploadBtn.textContent = 'Upload & Slice';
+            }
+        }
+
+        function showMessage(type, message) {
+            const statusDiv = document.getElementById('uploadStatus');
+            statusDiv.className = type;
+            statusDiv.textContent = message;
+            setTimeout(() => statusDiv.textContent = '', 5000);
+        }
+    </script>
+</body>
+</html>

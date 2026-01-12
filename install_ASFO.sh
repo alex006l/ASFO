@@ -204,6 +204,26 @@ EOF
       fi
     fi
     
+    # Add ASFO announcement/info to moonraker.conf
+    if ! grep -q "\[announcements\]" "$MOONRAKER_CONF"; then
+      cat >> "$MOONRAKER_CONF" << 'ANNOUNCE_EOF'
+
+[announcements]
+subscriptions:
+    ASFO
+ANNOUNCE_EOF
+    fi
+    
+    # Add ASFO UI info section
+    if ! grep -q "# ASFO Web Interface" "$MOONRAKER_CONF"; then
+      cat >> "$MOONRAKER_CONF" << EOF
+
+# ASFO Web Interface
+# Access at: http://${LOCAL_IP}:8080/ui/
+# API Docs: http://${LOCAL_IP}:8080/docs
+EOF
+    fi
+    
     # Restart Moonraker to apply changes
     if systemctl is-active --quiet moonraker; then
       echo "Restarting Moonraker to apply configuration..."
@@ -230,7 +250,10 @@ if systemctl is-active --quiet ASFO.service; then
   echo "✅ Installation complete!"
   echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
   echo ""
-  echo "ASFO Service is running at: http://$(hostname -I | awk '{print $1}'):8080"
+  LOCAL_IP=$(hostname -I | awk '{print $1}')
+  echo "🌐 ASFO Web Interface: http://${LOCAL_IP}:8080/ui/"
+  echo "📡 API Endpoint:       http://${LOCAL_IP}:8080"
+  echo "📖 API Documentation:  http://${LOCAL_IP}:8080/docs"
   echo ""
   echo "📁 Directories:"
   echo "  • Install:       $INSTALL_DIR"
@@ -242,17 +265,13 @@ if systemctl is-active --quiet ASFO.service; then
   echo "  • Check status:  sudo systemctl status ASFO"
   echo "  • View logs:     sudo journalctl -u ASFO -f"
   echo "  • Restart:       sudo systemctl restart ASFO"
-  echo "🔧 Useful commands:"
-  echo "  • Check status:  sudo systemctl status ASFO"
-  echo "  • View logs:     sudo journalctl -u ASFO -f"
-  echo "  • Restart:       sudo systemctl restart ASFO"
   echo "  • Stop:          sudo systemctl stop ASFO"
   echo ""
-  echo "🚀 Next steps:"
-  echo "  1. Test API:     curl http://localhost:8080/"
-  echo "  2. Check version: curl http://localhost:8080/version"
-  echo "  3. Go to Mainsail UI → Machine → Update Manager"
-  echo "  4. You should see 'ASFO' in the update list"
+  echo "🚀 Access ASFO:"
+  echo "  1. Web UI:       http://${LOCAL_IP}:8080/ui/"
+  echo "  2. Or bookmark it in your browser"
+  echo "  3. Update Manager: Mainsail → Machine → Update Manager"
+  echo "  4. Upload STL files and slice them directly from the UI"
   echo "  5. Upload an STL and test slicing"
   echo ""
   echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"

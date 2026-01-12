@@ -1,6 +1,7 @@
 """Main FastAPI application."""
 from fastapi import FastAPI, Depends, HTTPException, UploadFile, File
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, FileResponse
+from fastapi.staticfiles import StaticFiles
 from sqlmodel import Session
 from pathlib import Path
 import uuid
@@ -28,6 +29,11 @@ app = FastAPI(
     description="CuraEngine slicing service with feedback-driven profile optimization",
     version="0.1.0"
 )
+
+# Mount static files for web UI
+static_dir = Path(__file__).parent / "static"
+if static_dir.exists():
+    app.mount("/ui", StaticFiles(directory=str(static_dir), html=True), name="static")
 
 # Initialize DB on startup
 @app.on_event("startup")
