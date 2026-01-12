@@ -52,10 +52,17 @@ else
   fi
   
   # Clone with submodules to get all dependencies
-  echo "Cloning CuraEngine with dependencies..."
-  git clone --recursive --depth 1 https://github.com/Ultimaker/CuraEngine.git $CURAENGINE_DIR
+  # Note: --depth 1 with --recursive can be problematic, so we clone then init submodules
+  echo "Cloning CuraEngine..."
+  git clone --depth 1 https://github.com/Ultimaker/CuraEngine.git $CURAENGINE_DIR
+  
+  echo "Fetching submodule dependencies..."
+  cd $CURAENGINE_DIR
+  git submodule update --init --recursive --depth 1
+  cd -
   
   # Build
+  echo "Building CuraEngine..."
   mkdir -p $CURAENGINE_DIR/build
   cd $CURAENGINE_DIR/build
   cmake .. -DCMAKE_BUILD_TYPE=Release
