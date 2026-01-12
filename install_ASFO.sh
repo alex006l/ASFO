@@ -192,6 +192,15 @@ requirements: requirements.txt
 install_script: scripts/install_update.sh
 EOF
     
+    # Add ASFO to moonraker allowed services
+    MOONRAKER_ASVC="/home/pi/printer_data/moonraker.asvc"
+    if [ -f "$MOONRAKER_ASVC" ]; then
+      if ! grep -q "^ASFO$" "$MOONRAKER_ASVC"; then
+        echo "ASFO" >> "$MOONRAKER_ASVC"
+        echo "Added ASFO to moonraker allowed services"
+      fi
+    fi
+    
     # Restart Moonraker to apply changes
     if systemctl is-active --quiet moonraker; then
       echo "Restarting Moonraker to apply configuration..."

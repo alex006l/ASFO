@@ -69,6 +69,19 @@ else
   echo "✅ Update manager already configured"
 fi
 
+# Add ASFO to moonraker allowed services
+MOONRAKER_ASVC="/home/pi/printer_data/moonraker.asvc"
+if [ -f "$MOONRAKER_ASVC" ]; then
+  if ! grep -q "^ASFO$" "$MOONRAKER_ASVC"; then
+    echo "ASFO" >> "$MOONRAKER_ASVC"
+    echo "✅ Added ASFO to moonraker allowed services"
+  else
+    echo "✅ ASFO already in allowed services"
+  fi
+else
+  echo "⚠️  moonraker.asvc not found, service management may not work"
+fi
+
 # Restart Moonraker to apply changes
 if systemctl is-active --quiet moonraker; then
   echo "🔄 Restarting Moonraker..."
