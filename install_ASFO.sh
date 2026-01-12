@@ -54,7 +54,7 @@ else
   # Install Conan package manager (required for CuraEngine dependencies)
   echo "Installing Conan package manager..."
   if ! command -v conan &> /dev/null; then
-    if ! pip3 install --break-system-packages "conan<2.0"; then
+    if ! pip3 install --break-system-packages "conan>=2.7.0"; then
       echo "❌ Failed to install Conan"
       exit 1
     fi
@@ -69,10 +69,9 @@ else
   
   cd $CURAENGINE_DIR
   
-  # Set up Conan profile (Conan 1.x uses 'new' command, not 'detect')
+  # Set up Conan profile (Conan 2.x uses 'detect' command)
   echo "Configuring Conan default profile..."
-  conan profile new default --detect --force || echo "Profile already exists, continuing..."
-  conan profile update settings.compiler.libcxx=libstdc++11 default || true
+  conan profile detect --force || echo "Profile already exists, continuing..."
   
   # Install dependencies via Conan
   echo "Installing CuraEngine dependencies via Conan..."
