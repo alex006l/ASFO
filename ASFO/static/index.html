@@ -7,6 +7,7 @@
     <script src="https://cdn.jsdelivr.net/npm/three@0.150.1/build/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.150.1/examples/js/loaders/STLLoader.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.150.1/examples/js/controls/OrbitControls.js"></script>
+    <script src="viewer3d.js"></script>
     <style>
         * {
             margin: 0;
@@ -335,6 +336,106 @@
             padding: 10px;
             margin: 0;
         }
+
+        .btn-toolbar {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+        }
+
+        .btn-small {
+            background: #333;
+            color: #e0e0e0;
+            border: 1px solid #555;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.85em;
+            transition: all 0.2s;
+        }
+
+        .btn-small:hover {
+            background: #444;
+            border-color: #00bcd4;
+        }
+
+        .btn-danger {
+            background: #d32f2f;
+            border-color: #f44336;
+        }
+
+        .btn-danger:hover {
+            background: #f44336;
+        }
+
+        #modelInfo {
+            background: #1a1a1a;
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            min-height: 80px;
+        }
+
+        .model-item {
+            background: #252525;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 2px solid transparent;
+        }
+
+        .model-item:hover {
+            background: #2a2a2a;
+        }
+
+        .model-item.selected {
+            border-color: #00bcd4;
+            background: #1a3a3f;
+        }
+
+        .model-name {
+            color: #e0e0e0;
+            font-size: 0.9em;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .input-group label {
+            min-width: 20px;
+            color: #9e9e9e;
+            font-size: 0.85em;
+        }
+
+        .input-group input {
+            flex: 1;
+        }
+
+        .shortcuts-hint {
+            font-size: 0.75em;
+            color: #757575;
+            margin-top: 10px;
+            padding: 8px;
+            background: #1a1a1a;
+            border-radius: 4px;
+        }
+
+        .shortcuts-hint kbd {
+            background: #333;
+            padding: 2px 6px;
+            border-radius: 3px;
+            border: 1px solid #555;
+            font-size: 0.9em;
+        }
     </style>
 </head>
 <body>
@@ -379,67 +480,92 @@
             <div class="viewer-container">
                 <canvas id="viewer3d"></canvas>
                 <div class="viewer-controls">
+                    <!-- Toolbar -->
+                    <div class="btn-toolbar">
+                        <button class="btn-small" onclick="addMoreModels()">➕ Add Model</button>
+                        <button class="btn-small" onclick="viewer.duplicateSelected()">📋 Duplicate</button>
+                        <button class="btn-small" onclick="viewer.centerSelected()">⊕ Center</button>
+                        <button class="btn-small" onclick="viewer.fitToView()">🔍 Fit View</button>
+                        <button class="btn-small" onclick="viewer.resetSelectedTransform()">↺ Reset</button>
+                        <button class="btn-small btn-danger" onclick="viewer.deleteSelected()">🗑 Delete</button>
+                        <button class="btn-small btn-danger" onclick="confirmDeleteAll()">🗑 Delete All</button>
+                    </div>
+
+                    <!-- Model List -->
                     <div class="control-group">
-                        <label>Position (mm)</label>
-                        <div class="control-row">
-                            <div class="control-item">
-                                <span>X</span>
-                                <input type="number" id="posX" value="0" step="1">
+                        <label>Models (<span id="modelCount">0</span>)</label>
+                        <div id="modelList" style="max-height: 150px; overflow-y: auto;">
+                            <div class="empty-state">No models loaded</div>
+                        </div>
+                    </div>
+
+                    <!-- Selected Model Info -->
+                    <div id="modelInfo">
+                        <span style="color: #757575;">No model selected</span>
+                    </div>
+
+                    <!-- Transform Controls -->
+                    <div id="transformControls" style="opacity: 0.5; pointer-events: none;">
+                        <div class="control-group">
+                            <label>Position (mm)</label>
+                            <div class="control-row">
+                                <div class="input-group">
+                                    <label>X</label>
+                                    <input type="number" id="posX" value="0" step="1" oninput="setPosition()">
+                                </div>
+                                <div class="input-group">
+                                    <label>Y</label>
+                                    <input type="number" id="posY" value="0" step="1" oninput="setPosition()">
+                                </div>
+                                <div class="input-group">
+                                    <label>Z</label>
+                                    <input type="number" id="posZ" value="0" step="1" oninput="setPosition()">
+                                </div>
                             </div>
-                            <div class="control-item">
-                                <span>Y</span>
-                                <input type="number" id="posY" value="0" step="1">
+                        </div>
+
+                        <div class="control-group">
+                            <label>Rotation (degrees)</label>
+                            <div class="control-row">
+                                <div class="input-group">
+                                    <label>X</label>
+                                    <input type="number" id="rotX" value="0" step="15" oninput="setRotation()">
+                                </div>
+                                <div class="input-group">
+                                    <label>Y</label>
+                                    <input type="number" id="rotY" value="0" step="15" oninput="setRotation()">
+                                </div>
+                                <div class="input-group">
+                                    <label>Z</label>
+                                    <input type="number" id="rotZ" value="0" step="15" oninput="setRotation()">
+                                </div>
                             </div>
-                            <div class="control-item">
-                                <span>Z</span>
-                                <input type="number" id="posZ" value="0" step="1">
+                            <div style="margin-top: 8px; display: flex; gap: 8px;">
+                                <button class="btn-small" onclick="viewer.rotateSelected('x', 90)">↻ X 90°</button>
+                                <button class="btn-small" onclick="viewer.rotateSelected('y', 90)">↻ Y 90°</button>
+                                <button class="btn-small" onclick="viewer.rotateSelected('z', 90)">↻ Z 90°</button>
+                            </div>
+                        </div>
+
+                        <div class="control-group">
+                            <label>Scale</label>
+                            <div class="input-group">
+                                <label>Uniform</label>
+                                <input type="number" id="scaleVal" value="1" step="0.1" min="0.1" max="5" oninput="setUniformScale()">
+                                <button class="btn-small" onclick="setUniformScale(0.5)">50%</button>
+                                <button class="btn-small" onclick="setUniformScale(1)">100%</button>
+                                <button class="btn-small" onclick="setUniformScale(2)">200%</button>
                             </div>
                         </div>
                     </div>
-                    <div class="control-group">
-                        <label>Rotation (degrees)</label>
-                        <div class="control-row">
-                            <div class="control-item">
-                                <span>X</span>
-                                <input type="range" id="rotX" min="0" max="360" value="0" step="1">
-                                <input type="number" id="rotXVal" value="0" step="1" style="margin-top: 4px;">
-                            </div>
-                            <div class="control-item">
-                                <span>Y</span>
-                                <input type="range" id="rotY" min="0" max="360" value="0" step="1">
-                                <input type="number" id="rotYVal" value="0" step="1" style="margin-top: 4px;">
-                            </div>
-                            <div class="control-item">
-                                <span>Z</span>
-                                <input type="range" id="rotZ" min="0" max="360" value="0" step="1">
-                                <input type="number" id="rotZVal" value="0" step="1" style="margin-top: 4px;">
-                            </div>
-                        </div>
-                    </div>
-                    <div class="control-group">
-                        <label>Scale</label>
-                        <div class="control-row">
-                            <div class="control-item">
-                                <span>X</span>
-                                <input type="range" id="scaleX" min="0.1" max="3" value="1" step="0.1">
-                                <input type="number" id="scaleXVal" value="1" step="0.1" style="margin-top: 4px;">
-                            </div>
-                            <div class="control-item">
-                                <span>Y</span>
-                                <input type="range" id="scaleY" min="0.1" max="3" value="1" step="0.1">
-                                <input type="number" id="scaleYVal" value="1" step="0.1" style="margin-top: 4px;">
-                            </div>
-                            <div class="control-item">
-                                <span>Z</span>
-                                <input type="range" id="scaleZ" min="0.1" max="3" value="1" step="0.1">
-                                <input type="number" id="scaleZVal" value="1" step="0.1" style="margin-top: 4px;">
-                            </div>
-                        </div>
-                    </div>
-                    <div class="control-buttons">
-                        <button onclick="resetTransforms()">Reset Transforms</button>
-                        <button onclick="centerModel()">Center Model</button>
-                        <button onclick="fitToView()">Fit to View</button>
+
+                    <!-- Keyboard Shortcuts -->
+                    <div class="shortcuts-hint">
+                        <strong>Keyboard Shortcuts:</strong> 
+                        <kbd>←→↑↓</kbd> Move | 
+                        <kbd>Shift</kbd>+Arrow Faster | 
+                        <kbd>Ctrl</kbd>+<kbd>D</kbd> Duplicate | 
+                        <kbd>Del</kbd> Delete
                     </div>
                 </div>
             </div>
@@ -743,242 +869,70 @@
         }
 
     // ========== 3D VIEWER ==========
-    let scene, camera, renderer, controls, mesh, gridHelper;
-    let modelLoaded = false;
+    let viewer = null;
 
     function init3DViewer() {
-        const canvas = document.getElementById('viewer3d');
-        const container = canvas.parentElement;
-
-        // Scene
-        scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x0d0d0d);
-
-        // Camera
-        camera = new THREE.PerspectiveCamera(
-            45,
-            container.clientWidth / 500,
-            0.1,
-            10000
-        );
-        camera.position.set(150, 150, 150);
-        camera.lookAt(0, 0, 0);
-
-        // Renderer
-        renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true });
-        renderer.setSize(container.clientWidth, 500);
-        renderer.setPixelRatio(window.devicePixelRatio);
-
-        // Lights
-        const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
-        scene.add(ambientLight);
-
-        const directionalLight1 = new THREE.DirectionalLight(0xffffff, 0.5);
-        directionalLight1.position.set(1, 1, 1);
-        scene.add(directionalLight1);
-
-        const directionalLight2 = new THREE.DirectionalLight(0xffffff, 0.3);
-        directionalLight2.position.set(-1, -1, -1);
-        scene.add(directionalLight2);
-
-        // Grid
-        gridHelper = new THREE.GridHelper(200, 20, 0x00bcd4, 0x333333);
-        scene.add(gridHelper);
-
-        // Axes helper
-        const axesHelper = new THREE.AxesHelper(100);
-        scene.add(axesHelper);
-
-        // Controls
-        controls = new THREE.OrbitControls(camera, renderer.domElement);
-        controls.enableDamping = true;
-        controls.dampingFactor = 0.05;
-        controls.screenSpacePanning = false;
-        controls.minDistance = 10;
-        controls.maxDistance = 1000;
-
-        // Handle window resize
-        window.addEventListener('resize', onWindowResize);
-
-        // Setup transform controls
-        setupTransformControls();
-
-        // Animation loop
-        animate();
+        viewer = new ASFO3DViewer('viewer3d');
+        document.getElementById('viewer3dCard').style.display = 'block';
     }
 
-    function animate() {
-        requestAnimationFrame(animate);
-        controls.update();
-        renderer.render(scene, camera);
+    async function loadSTLToViewer(file) {
+        if (!viewer) {
+            init3DViewer();
+        }
+
+        try {
+            await viewer.loadSTL(file);
+            document.getElementById('modelCount').textContent = viewer.getModelsCount();
+            viewer.updateModelList();
+        } catch (error) {
+            console.error('Failed to load STL:', error);
+            showMessage('error', 'Failed to load 3D model: ' + error.message);
+        }
     }
 
-    function onWindowResize() {
-        const container = document.getElementById('viewer3d').parentElement;
-        camera.aspect = container.clientWidth / 500;
-        camera.updateProjectionMatrix();
-        renderer.setSize(container.clientWidth, 500);
-    }
-
-    function loadSTLToViewer(file) {
-        const loader = new THREE.STLLoader();
-        const reader = new FileReader();
-
-        reader.onload = function (event) {
-            const geometry = loader.parse(event.target.result);
-
-            // Remove old mesh if exists
-            if (mesh) {
-                scene.remove(mesh);
-                mesh.geometry.dispose();
-                mesh.material.dispose();
+    function addMoreModels() {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.stl,.STL';
+        input.multiple = true;
+        input.onchange = async (e) => {
+            const files = Array.from(e.target.files);
+            for (const file of files) {
+                await loadSTLToViewer(file);
             }
-
-            // Create material
-            const material = new THREE.MeshPhongMaterial({
-                color: 0x00bcd4,
-                specular: 0x111111,
-                shininess: 200,
-                flatShading: false
-            });
-
-            // Create mesh
-            mesh = new THREE.Mesh(geometry, material);
-
-            // Center the geometry
-            geometry.computeBoundingBox();
-            const center = new THREE.Vector3();
-            geometry.boundingBox.getCenter(center);
-            geometry.translate(-center.x, -center.y, -geometry.boundingBox.min.z);
-
-            scene.add(mesh);
-            modelLoaded = true;
-
-            // Show viewer
-            document.getElementById('viewer3dCard').style.display = 'block';
-
-            // Fit camera to model
-            fitToView();
         };
-
-        reader.readAsArrayBuffer(file);
+        input.click();
     }
 
-    function setupTransformControls() {
-        // Position controls
-        ['posX', 'posY', 'posZ'].forEach(id => {
-            document.getElementById(id).addEventListener('input', updatePosition);
-        });
-
-        // Rotation controls (sliders and inputs)
-        ['X', 'Y', 'Z'].forEach(axis => {
-            const slider = document.getElementById(`rot${axis}`);
-            const input = document.getElementById(`rot${axis}Val`);
-
-            slider.addEventListener('input', (e) => {
-                input.value = e.target.value;
-                updateRotation();
-            });
-
-            input.addEventListener('input', (e) => {
-                slider.value = e.target.value;
-                updateRotation();
-            });
-        });
-
-        // Scale controls (sliders and inputs)
-        ['X', 'Y', 'Z'].forEach(axis => {
-            const slider = document.getElementById(`scale${axis}`);
-            const input = document.getElementById(`scale${axis}Val`);
-
-            slider.addEventListener('input', (e) => {
-                input.value = e.target.value;
-                updateScale();
-            });
-
-            input.addEventListener('input', (e) => {
-                slider.value = e.target.value;
-                updateScale();
-            });
-        });
+    function confirmDeleteAll() {
+        if (confirm('Delete all models? This cannot be undone.')) {
+            viewer.deleteAll();
+            document.getElementById('modelCount').textContent = '0';
+        }
     }
 
-    function updatePosition() {
-        if (!mesh) return;
-        mesh.position.x = parseFloat(document.getElementById('posX').value) || 0;
-        mesh.position.y = parseFloat(document.getElementById('posY').value) || 0;
-        mesh.position.z = parseFloat(document.getElementById('posZ').value) || 0;
+    function setPosition() {
+        if (!viewer || !viewer.selectedModel) return;
+        const x = parseFloat(document.getElementById('posX').value) || 0;
+        const y = parseFloat(document.getElementById('posY').value) || 0;
+        const z = parseFloat(document.getElementById('posZ').value) || 0;
+        viewer.selectedModel.mesh.position.set(x, y, z);
     }
 
-    function updateRotation() {
-        if (!mesh) return;
-        const rotX = (parseFloat(document.getElementById('rotX').value) || 0) * Math.PI / 180;
-        const rotY = (parseFloat(document.getElementById('rotY').value) || 0) * Math.PI / 180;
-        const rotZ = (parseFloat(document.getElementById('rotZ').value) || 0) * Math.PI / 180;
-        mesh.rotation.set(rotX, rotY, rotZ);
+    function setRotation() {
+        if (!viewer || !viewer.selectedModel) return;
+        const x = (parseFloat(document.getElementById('rotX').value) || 0) * Math.PI / 180;
+        const y = (parseFloat(document.getElementById('rotY').value) || 0) * Math.PI / 180;
+        const z = (parseFloat(document.getElementById('rotZ').value) || 0) * Math.PI / 180;
+        viewer.selectedModel.mesh.rotation.set(x, y, z);
     }
 
-    function updateScale() {
-        if (!mesh) return;
-        mesh.scale.x = parseFloat(document.getElementById('scaleX').value) || 1;
-        mesh.scale.y = parseFloat(document.getElementById('scaleY').value) || 1;
-        mesh.scale.z = parseFloat(document.getElementById('scaleZ').value) || 1;
-    }
-
-    function resetTransforms() {
-        // Reset position
-        document.getElementById('posX').value = 0;
-        document.getElementById('posY').value = 0;
-        document.getElementById('posZ').value = 0;
-
-        // Reset rotation
-        ['X', 'Y', 'Z'].forEach(axis => {
-            document.getElementById(`rot${axis}`).value = 0;
-            document.getElementById(`rot${axis}Val`).value = 0;
-        });
-
-        // Reset scale
-        ['X', 'Y', 'Z'].forEach(axis => {
-            document.getElementById(`scale${axis}`).value = 1;
-            document.getElementById(`scale${axis}Val`).value = 1;
-        });
-
-        updatePosition();
-        updateRotation();
-        updateScale();
-    }
-
-    function centerModel() {
-        if (!mesh) return;
-
-        // Reset position to center
-        document.getElementById('posX').value = 0;
-        document.getElementById('posY').value = 0;
-        document.getElementById('posZ').value = 0;
-        updatePosition();
-    }
-
-    function fitToView() {
-        if (!mesh) return;
-
-        // Get bounding box
-        const box = new THREE.Box3().setFromObject(mesh);
-        const size = box.getSize(new THREE.Vector3());
-        const center = box.getCenter(new THREE.Vector3());
-
-        // Calculate distance needed to fit object
-        const maxDim = Math.max(size.x, size.y, size.z);
-        const fov = camera.fov * (Math.PI / 180);
-        let cameraZ = Math.abs(maxDim / 2 / Math.tan(fov / 2));
-        cameraZ *= 1.5; // Add some padding
-
-        // Position camera
-        camera.position.set(cameraZ, cameraZ, cameraZ);
-        camera.lookAt(center);
-
-        // Update controls target
-        controls.target.copy(center);
-        controls.update();
+    function setUniformScale(value) {
+        if (!viewer || !viewer.selectedModel) return;
+        const scale = value !== undefined ? value : (parseFloat(document.getElementById('scaleVal').value) || 1);
+        viewer.scaleSelected(scale, scale, scale);
+        document.getElementById('scaleVal').value = scale.toFixed(2);
     }
     </script>
 </body>
