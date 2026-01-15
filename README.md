@@ -95,7 +95,7 @@ See [QUICKSTART.md](QUICKSTART.md) for full instructions.
 - `GET /filaments/{printer_id}` — List all calibrated filaments
 - `GET /filaments/{printer_id}/{filament_name}` — Get specific filament profile
 
-## Feedback Loop
+## TODO : Feedback Loop
 
 After each print, users answer:
 - ✅ Success or ❌ Failure?
@@ -120,7 +120,7 @@ The system applies small, reversible mutations:
 | [FILAMENT_CALIBRATION.md](FILAMENT_CALIBRATION.md) | Calibration workflow & guide |
 | [READY_TO_DEPLOY.md](READY_TO_DEPLOY.md) | Pre-publish checklist |
 
-## Mainsail Integration
+## TODO : Mainsail Integration
 
 Three approaches:
 1. **Iframe panel** (quickest, no Mainsail changes)
@@ -190,10 +190,10 @@ Environment variables:
 - [x] Feedback endpoints
 - [x] Profile mutations
 - [x] Moonraker upload
-- [x] Filament-specific calibration
-- [x] Pressure advance testing
+- [1] Filament-specific calibration
+- [ ] Pressure advance testing
 - [x] Printer.cfg parsing
-- [x] Klipper integration (layer tracking, timelapse)
+- [ ] Klipper integration (layer tracking, timelapse)
 - [x] Transparent thumbnails for Mainsail
 - [ ] Mainsail iframe UI
 - [ ] WebSocket for real-time progress
